@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SKAP · Weekend Engine</title>
+<meta name="description" content="Dove vai questo weekend? Volo + ostello + vita giornaliera, un solo numero. Comparatore voli low-cost per under 30." />
+<meta property="og:title" content="SKAP · Weekend Engine" />
+<meta property="og:description" content="Dove vai questo weekend? Volo + ostello + vita. Un solo numero." />
+<meta property="og:type" content="website" />
+<meta name="theme-color" content="#0a0a0a" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%230a0a0a%22/><text x=%2250%22 y=%2272%22 font-family=%22Arial Black%22 font-size=%2270%22 font-weight=%22900%22 text-anchor=%22middle%22 fill=%22%23c8f03c%22>S</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+:root {
+  --bg: #0a0a0a;
+  --bg-card-start: #141414;
+  --bg-card-end: #0f0f0f;
+  --border: #27272a;
+  --border-soft: #18181b;
+  --text: #fafafa;
+  --text-muted: #a1a1aa;
+  --text-dim: #52525b;
+  --text-dimmer: #3f3f46;
+  --lime: #c8f03c;
+  --sky: #38bdf8;
+  --amber: #fbbf24;
+  --rose: #fb7185;
+  --orange: #fb923c;
+  --lime-border: rgba(200, 240, 60, 0.4);
+}
+html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow-x: hidden; }
+body { min-height: 100vh; }
+::selection { background: var(--lime); color: var(--bg); }
+a { color: inherit; text-decoration: none; }
+button { background: none; border: none; color: inherit; cursor: pointer; font-family: inherit; }
+input, select { font-family: inherit; color: inherit; background: transparent; border: none; outline: none; }
+input:focus, select:focus, button:focus { outline: none; }
+
+.f-display { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.01em; }
+.f-mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Animations */
+@keyframes scroll-x { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.scroll-x { animation: scroll-x 50s linear infinite; }
+.fade-up { animation: fade-up 0.5s ease-out forwards; }
+.pulse-dot { animation: pulse-dot 1.8s ease-in-out infinite; }
+
+.grid-bg {
+  background-image: linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+.card-gradient { background: linear-gradient(180deg, var(--bg-card-start) 0%, var(--bg-card-end) 100%); }
+
+/* Header */
+.header {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(10, 10, 10, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-soft);
+}
+.header-inner {
+  max-width: 1280px; margin: 0 auto;
+  padding: 14px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+@media (min-width: 640px) { .header-inner { padding: 14px 24px; } }
+.logo { display: flex; align-items: baseline; gap: 10px; }
+.logo-text { font-family: 'Bebas Neue', sans-serif; font-size: 28px; line-height: 1; transition: color 0.2s; }
+.logo:hover .logo-text { color: var(--lime); }
+.logo-sub { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-dim); letter-spacing: 0.2em; }
+@media (max-width: 640px) { .logo-sub { display: none; } }
+.nav { display: flex; align-items: center; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+@media (min-width: 640px) { .nav { gap: 12px; } }
+.nav-link { padding: 6px 10px; border-radius: 6px; color: var(--text-dim); transition: all 0.2s; }
+.nav-link:hover { color: var(--text); }
+.nav-link.active { color: var(--lime); background: #18181b; }
+.nav-cta { display: none; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); color: var(--text-muted); transition: border-color 0.2s; }
+.nav-cta:hover { border-color: #52525b; }
+@media (min-width: 640px) { .nav-cta { display: flex; } }
+.nav-cta-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lime); }
+
+/* Ticker */
+.ticker-wrapper { border-bottom: 1px solid var(--border-soft); padding: 8px 0; overflow: hidden; background: var(--bg); }
+.ticker-track { display: flex; gap: 40px; white-space: nowrap; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); }
+.ticker-group { display: flex; gap: 40px; flex-shrink: 0; }
+.ticker-up { color: var(--rose); }
+.ticker-down { color: var(--lime); }
+.ticker-item .dot { color: var(--lime); }
+
+/* Main layout */
+main { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
+@media (min-width: 640px) { main { padding: 0 24px; } }
+
+/* View management */
+.view { display: none; }
+.view.active { display: block; }
+
+/* Hero home */
+.hero { padding: 40px 0 40px; position: relative; }
+@media (min-width: 640px) { .hero { padding: 64px 0 40px; } }
+.hero-bg { position: absolute; inset: 0; opacity: 0.4; pointer-events: none; }
+.hero-inner { position: relative; }
+
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 12px; border-radius: 9999px;
+  border: 1px solid var(--border); background: #0a0a0a;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted);
+  margin-bottom: 24px;
+}
+.hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lime); }
+
+.hero-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 54px; line-height: 0.85; letter-spacing: -0.01em;
+}
+@media (min-width: 640px) { .hero-title { font-size: 110px; } }
+@media (min-width: 1024px) { .hero-title { font-size: 150px; } }
+.hero-title .lime { color: var(--lime); }
+.hero-sub { font-size: 16px; color: var(--text-muted); margin-top: 24px; max-width: 576px; }
+@media (min-width: 640px) { .hero-sub { font-size: 18px; } }
+.hero-sub strong { color: var(--text); font-weight: 600; }
+
+/* Search card */
+.search-wrap { padding-bottom: 48px; }
+.search-card {
+  background: linear-gradient(180deg, var(--bg-card-start) 0%, var(--bg-card-end) 100%);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+}
+.search-grid {
+  display: grid; grid-template-columns: 1fr; 
+}
+@media (min-width: 640px) { .search-grid { grid-template-columns: 1fr 1fr 1fr; } }
+.search-field {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-soft);
+  transition: background 0.2s;
+}
+.search-field:hover { background: rgba(10,10,10,0.5); }
+@media (min-width: 640px) {
+  .search-field { border-bottom: none; border-right: 1px solid var(--border-soft); }
+  .search-field:last-child { border-right: none; }
+}
+.field-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text-dim); letter-spacing: 0.2em;
+  margin-bottom: 8px;
+  display: flex; align-items: center; gap: 6px;
+}
+.field-label svg { width: 14px; height: 14px; color: var(--text-dimmer); }
+.field-value-select {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 30px; color: var(--lime);
+  cursor: pointer; width: 100%;
+  appearance: none; -webkit-appearance: none;
+}
+@media (min-width: 640px) { .field-value-select { font-size: 36px; } }
+.nights-control { display: flex; align-items: center; gap: 14px; }
+.nights-btn {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: 'Bebas Neue', sans-serif; font-size: 20px;
+  transition: all 0.2s;
+}
+.nights-btn:hover { border-color: #52525b; color: var(--text); }
+.nights-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 30px; color: var(--lime);
+  min-width: 28px; text-align: center;
+}
+@media (min-width: 640px) { .nights-value { font-size: 36px; } }
+.budget-wrap { padding-top: 8px; }
+.budget-slider {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 4px; background: var(--border);
+  border-radius: 2px; outline: none;
+}
+.budget-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--lime); cursor: pointer;
+  box-shadow: 0 0 0 4px rgba(200, 240, 60, 0.15);
+}
+.budget-slider::-moz-range-thumb {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--lime); cursor: pointer; border: none;
+  box-shadow: 0 0 0 4px rgba(200, 240, 60, 0.15);
+}
+.budget-range-labels {
+  display: flex; justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--text-dimmer);
+  margin-top: 4px;
+}
+
+.search-cta {
+  width: 100%;
+  background: var(--lime); color: var(--bg);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 30px; padding: 20px;
+  letter-spacing: 0.05em;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  transition: background 0.2s;
+}
+@media (min-width: 640px) { .search-cta { font-size: 36px; } }
+.search-cta:hover { background: var(--text); }
+.search-cta svg { width: 24px; height: 24px; stroke-width: 3; }
+
+/* Mood filters */
+.mood-wrap { padding-bottom: 32px; margin-top: -16px; }
+.mood-filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin: 0 -16px; padding-left: 16px; padding-right: 16px; }
+@media (min-width: 640px) { .mood-filters { margin: 0; padding-left: 0; padding-right: 0; } }
+.mood-filters::-webkit-scrollbar { display: none; }
+.mood-btn {
+  flex-shrink: 0;
+  padding: 8px 16px; border-radius: 9999px;
+  border: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+.mood-btn:hover { border-color: #52525b; }
+.mood-btn.active { background: var(--lime); color: var(--bg); border-color: var(--lime); }
+.mood-btn-icon { margin-right: 6px; }
+
+/* Trending section */
+.section { padding-bottom: 64px; }
+.section-head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; }
+.section-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); letter-spacing: 0.2em; margin-bottom: 4px; }
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: 36px; }
+@media (min-width: 640px) { .section-title { font-size: 48px; } }
+.section-link { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); padding-bottom: 4px; display: none; align-items: center; gap: 8px; }
+@media (min-width: 640px) { .section-link { display: flex; } }
+.section-link:hover { color: var(--lime); }
+.section-link svg { width: 12px; height: 12px; }
+
+/* Destination cards */
+.cards-stack { display: flex; flex-direction: column; gap: 16px; }
+
+.dest-card {
+  background: linear-gradient(180deg, var(--bg-card-start) 0%, var(--bg-card-end) 100%);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  width: 100%; text-align: left;
+  display: block;
+  transition: border-color 0.2s;
+}
+.dest-card:hover { border-color: #3f3f46; }
+
+.dest-image {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  background: #18181b;
+}
+@media (min-width: 640px) { .dest-image { height: 200px; } }
+.dest-image img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease, filter 0.3s ease;
+  filter: brightness(0.75) saturate(1.1);
+}
+.dest-card:hover .dest-image img { transform: scale(1.04); filter: brightness(0.85) saturate(1.15); }
+.dest-image-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(10,10,10,0.85) 100%);
+  pointer-events: none;
+}
+.dest-image-price {
+  position: absolute;
+  top: 12px; right: 12px;
+  padding: 6px 12px;
+  background: var(--lime); color: var(--bg);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px; line-height: 1;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.dest-image-rank {
+  position: absolute;
+  top: 12px; left: 12px;
+  padding: 6px 12px;
+  background: rgba(10,10,10,0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--text);
+}
+.dest-image-badges {
+  position: absolute;
+  bottom: 12px; left: 12px; right: 12px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.dest-image-flag {
+  font-size: 28px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+.dest-image-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 40px; line-height: 0.9;
+  color: var(--text);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  letter-spacing: 0.02em;
+}
+@media (min-width: 640px) { .dest-image-title { font-size: 48px; } }
+
+.dest-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-soft);
+}
+@media (min-width: 640px) { .dest-header { padding: 14px 24px; } }
+.dest-identity { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.dest-text { min-width: 0; width: 100%; }
+.dest-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text-dim); letter-spacing: 0.05em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+@media (min-width: 640px) { .dest-meta { font-size: 11px; } }
+
+/* Stats grid */
+.dest-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+@media (min-width: 640px) { .dest-stats { grid-template-columns: repeat(4, 1fr); } }
+.stat-cell {
+  padding: 16px 16px;
+  border-right: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+}
+@media (min-width: 640px) {
+  .stat-cell { padding: 16px 20px; border-bottom: none; }
+  .stat-cell:last-child { border-right: none; }
+}
+.stat-cell:nth-child(2) { border-right: none; }
+.stat-cell:nth-child(3), .stat-cell:nth-child(4) { border-bottom: none; }
+@media (min-width: 640px) {
+  .stat-cell:nth-child(2) { border-right: 1px solid var(--border-soft); }
+}
+.stat-cell.highlight { background: rgba(200, 240, 60, 0.05); }
+.stat-cell-label {
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--text-dim); letter-spacing: 0.15em;
+  margin-bottom: 6px;
+}
+@media (min-width: 640px) { .stat-cell-label { font-size: 10px; } }
+.stat-cell-emoji { font-size: 14px; line-height: 1; }
+.stat-cell-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px; line-height: 1; color: var(--text);
+}
+@media (min-width: 640px) { .stat-cell-value { font-size: 32px; } }
+.stat-cell.highlight .stat-cell-value { color: var(--lime); }
+.stat-cell-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--text-dimmer);
+  margin-top: 6px; line-height: 1.3;
+}
+@media (min-width: 640px) { .stat-cell-sub { font-size: 10px; } }
+
+/* Progress bars */
+.dest-bars {
+  padding: 20px; border-top: 1px solid var(--border-soft);
+  display: flex; flex-direction: column; gap: 10px;
+}
+@media (min-width: 640px) { .dest-bars { padding: 20px 24px; } }
+.bar-row { display: flex; align-items: center; gap: 16px; }
+.bar-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text-dim); letter-spacing: 0.1em;
+  width: 64px; flex-shrink: 0;
+}
+@media (min-width: 640px) { .bar-label { width: 80px; } }
+.bar-track {
+  flex: 1; height: 6px; background: #18181b;
+  border-radius: 9999px; overflow: hidden;
+}
+.bar-fill { height: 100%; border-radius: 9999px; transition: width 0.3s; }
+.bar-fill.volo { background: var(--sky); }
+.bar-fill.ostello { background: var(--amber); }
+.bar-fill.vita { background: var(--rose); }
+.bar-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--text-muted);
+  width: 56px; text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tags */
+.dest-tags {
+  padding: 0 20px 20px;
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+@media (min-width: 640px) { .dest-tags { padding: 0 24px 20px; } }
+.tag {
+  padding: 4px 10px; border-radius: 6px;
+  border: 1px solid;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.1em;
+}
+.tag.iconic { color: var(--amber); border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.05); }
+.tag.positive { color: #a3e635; border-color: rgba(132, 204, 22, 0.4); background: rgba(132, 204, 22, 0.05); }
+.tag.warning { color: var(--orange); border-color: rgba(251, 146, 60, 0.4); background: rgba(251, 146, 60, 0.05); }
+.tag.danger { color: var(--rose); border-color: rgba(251, 113, 133, 0.4); background: rgba(251, 113, 133, 0.05); }
+
+/* Results view */
+.back-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--text-dim);
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 24px;
+}
+.back-btn:hover { color: var(--lime); }
+.back-btn svg { width: 12px; height: 12px; }
+
+.results-head {
+  display: flex; flex-direction: column; gap: 16px;
+  margin-bottom: 24px; padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-soft);
+}
+@media (min-width: 640px) { .results-head { flex-direction: row; align-items: flex-end; justify-content: space-between; } }
+.results-count {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 54px; line-height: 1;
+}
+@media (min-width: 640px) { .results-count { font-size: 72px; } }
+.results-count .num { color: var(--lime); }
+.results-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--text-muted);
+  margin-top: 8px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px;
+}
+.results-meta .sep { color: var(--text-dimmer); }
+
+.chips-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip {
+  padding: 6px 12px; border-radius: 9999px;
+  border: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.15em;
+  color: var(--text-dim);
+}
+.chip:hover { border-color: #52525b; }
+.chip.active { color: var(--lime); border-color: var(--lime-border); background: rgba(200, 240, 60, 0.1); }
+
+.empty-state {
+  padding: 80px 20px; text-align: center;
+  background: linear-gradient(180deg, var(--bg-card-start) 0%, var(--bg-card-end) 100%);
+  border: 1px solid var(--border); border-radius: 16px;
+}
+.empty-face { font-family: 'Bebas Neue', sans-serif; font-size: 72px; color: #27272a; }
+.empty-text { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--text-dim); margin-top: 16px; line-height: 1.6; }
+
+.disclaimer {
+  margin-top: 32px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text-dimmer);
+  text-align: center; line-height: 1.8;
+}
+
+/* Detail view */
+.detail-hero {
+  background: linear-gradient(180deg, var(--bg-card-start) 0%, var(--bg-card-end) 100%);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  overflow: hidden; margin-bottom: 24px;
+  position: relative;
+}
+.detail-hero-image {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  overflow: hidden;
+}
+@media (min-width: 640px) { .detail-hero-image { height: 360px; } }
+.detail-hero-image img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  filter: brightness(0.55) saturate(1.1);
+}
+.detail-hero-image-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(10,10,10,0.3) 0%, rgba(10,10,10,0.95) 100%);
+}
+.detail-hero-image-title {
+  position: absolute;
+  bottom: 20px; left: 24px; right: 24px;
+}
+@media (min-width: 640px) { .detail-hero-image-title { bottom: 32px; left: 40px; right: 40px; } }
+.detail-hero-image-title h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 60px; line-height: 0.85;
+  text-shadow: 0 4px 20px rgba(0,0,0,0.6);
+}
+@media (min-width: 640px) { .detail-hero-image-title h1 { font-size: 140px; } }
+.detail-hero-image-route {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--lime);
+  letter-spacing: 0.2em;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px;
+  margin-bottom: 8px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+}
+.detail-hero-image-route .arrow { width: 12px; height: 12px; }
+.detail-hero-bg { position: absolute; inset: 0; opacity: 0.3; }
+.detail-hero-inner {
+  position: relative; padding: 32px 24px;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  flex-wrap: wrap; gap: 16px;
+}
+@media (min-width: 640px) { .detail-hero-inner { padding: 40px; } }
+
+.detail-route {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--text-dim); letter-spacing: 0.2em;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px;
+}
+.detail-route .arrow { width: 12px; height: 12px; }
+.detail-route .lime { color: var(--lime); }
+.detail-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 60px; line-height: 0.85; margin-top: 12px;
+}
+@media (min-width: 640px) { .detail-name { font-size: 140px; } }
+.detail-why { font-size: 16px; color: var(--text); margin-top: 16px; max-width: 640px; }
+@media (min-width: 640px) { .detail-why { font-size: 20px; } }
+
+.detail-price-wrap { flex-shrink: 0; text-align: right; }
+.detail-price-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); letter-spacing: 0.2em; }
+.detail-price {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 64px; line-height: 1; color: var(--lime);
+}
+@media (min-width: 640px) { .detail-price { font-size: 120px; } }
+.detail-price .cur { font-size: 36px; }
+@media (min-width: 640px) { .detail-price .cur { font-size: 60px; } }
+.detail-price-sub { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+
+.detail-tags { padding: 0 24px 24px; display: flex; flex-wrap: wrap; gap: 6px; }
+@media (min-width: 640px) { .detail-tags { padding: 0 40px 32px; } }
+
+.detail-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 1024px) { .detail-grid { grid-template-columns: 2fr 1fr; } }
+
+.breakdown-card {
+  background: linear-gradient(180deg, var(--bg-card-start) 0%, var(--bg-card-end) 100%);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.breakdown-head {
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border-soft);
+  display: flex; align-items: center; justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text-dim); letter-spacing: 0.2em;
+}
+.breakdown-head a:hover { color: var(--lime); }
+
+.cost-row {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.cost-row:last-child { border-bottom: none; }
+.cost-row-top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px; margin-bottom: 12px;
+}
+.cost-row-left { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+.cost-emoji { font-size: 24px; line-height: 1; margin-top: 2px; }
+.cost-info { min-width: 0; }
+.cost-label { font-family: 'Bebas Neue', sans-serif; font-size: 24px; line-height: 1.1; }
+@media (min-width: 640px) { .cost-label { font-size: 28px; } }
+.cost-detail { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+.cost-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px; flex-shrink: 0;
+}
+@media (min-width: 640px) { .cost-value { font-size: 36px; } }
+.cost-bar { height: 4px; background: #18181b; border-radius: 9999px; overflow: hidden; margin-bottom: 12px; }
+.cost-bar-fill { height: 100%; background: #52525b; border-radius: 9999px; }
+.cost-extras {
+  display: flex; flex-wrap: wrap; gap: 4px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text-dim);
+}
+
+.total-row {
+  padding: 24px;
+  background: var(--lime); color: var(--bg);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.total-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.2em; opacity: 0.7; }
+.total-main { font-family: 'Bebas Neue', sans-serif; font-size: 32px; margin-top: 4px; }
+.total-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 64px; line-height: 1;
+}
+@media (min-width: 640px) { .total-value { font-size: 96px; } }
+
+.cta-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 16px; }
+@media (min-width: 640px) { .cta-grid { grid-template-columns: 1fr 1fr; } }
+.cta-card {
+  background: linear-gradient(180deg, var(--bg-card-start) 0%, var(--bg-card-end) 100%);
+  border: 1px solid;
+  border-radius: 16px;
+  padding: 20px; text-align: left;
+  transition: all 0.2s;
+  display: block;
+}
+.cta-card.primary { border-color: var(--lime); }
+.cta-card.primary:hover { background: var(--lime); color: var(--bg); }
+.cta-card.secondary { border-color: var(--border); }
+.cta-card.secondary:hover { border-color: rgba(245, 158, 11, 0.6); }
+.cta-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.cta-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.2em; }
+.cta-card.primary .cta-label { color: var(--lime); }
+.cta-card.primary:hover .cta-label { color: var(--bg); }
+.cta-card.secondary .cta-label { color: var(--amber); }
+.cta-card.secondary .cta-arrow { color: var(--text-dim); }
+.cta-card.secondary:hover .cta-arrow { color: var(--amber); }
+.cta-arrow { width: 16px; height: 16px; transition: all 0.2s; }
+.cta-card.primary .cta-arrow { color: var(--lime); }
+.cta-card.primary:hover .cta-arrow { color: var(--bg); transform: translateX(2px); }
+.cta-name { font-family: 'Bebas Neue', sans-serif; font-size: 28px; }
+.cta-card.secondary:hover .cta-name { color: var(--amber); }
+.cta-sub { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); margin-top: 8px; }
+.cta-card.primary:hover .cta-sub { color: rgba(10,10,10,0.6); }
+.cta-warning { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--orange); }
+.cta-card.primary:hover .cta-warning { color: var(--bg); }
+.cta-warning svg { width: 12px; height: 12px; }
+.cta-card.secondary .cta-warning { color: var(--text-dim); }
+
+/* Sidebar */
+.sidebar { display: flex; flex-direction: column; gap: 16px; }
+.side-card {
+  background: linear-gradient(180deg, var(--bg-card-start) 0%, var(--bg-card-end) 100%);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.side-head {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-soft);
+  display: flex; align-items: center; justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text-dim); letter-spacing: 0.2em;
+}
+
+.map-box {
+  aspect-ratio: 1;
+  position: relative;
+}
+.map-pin {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+}
+.map-pin-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--lime); color: var(--bg);
+  margin-bottom: 12px;
+}
+.map-pin-icon svg { width: 24px; height: 24px; stroke-width: 2.5; }
+.map-name { font-family: 'Bebas Neue', sans-serif; font-size: 24px; }
+.map-country { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+.map-toggles { position: absolute; top: 12px; right: 12px; display: flex; gap: 6px; }
+.map-toggle {
+  padding: 4px 8px; border-radius: 6px;
+  background: rgba(0,0,0,0.6); border: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-muted);
+}
+.map-toggle.active { background: rgba(200, 240, 60, 0.2); border-color: var(--lime-border); color: var(--lime); }
+.map-tag { position: absolute; bottom: 12px; left: 12px; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-dimmer); }
+
+.facts-list { }
+.fact-row {
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border-soft);
+  display: flex; align-items: center; justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+}
+.fact-row:last-child { border-bottom: none; }
+.fact-left { display: flex; align-items: center; gap: 8px; color: var(--text-muted); }
+.fact-left svg { width: 14px; height: 14px; }
+.fact-value { color: var(--text); }
+
+.alert-body { padding: 20px; }
+.alert-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; margin-bottom: 8px; }
+.alert-price-wrap { display: flex; align-items: baseline; gap: 8px; }
+.alert-price { font-family: 'Bebas Neue', sans-serif; font-size: 48px; color: var(--lime); line-height: 1; }
+.alert-pct { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); }
+.alert-presets { display: flex; gap: 8px; margin-top: 12px; }
+.alert-preset {
+  flex: 1; padding: 8px; border-radius: 8px;
+  border: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted);
+}
+.alert-preset:hover { border-color: #52525b; }
+.alert-cta {
+  width: 100%; margin-top: 12px; padding: 10px;
+  border-radius: 8px;
+  background: #18181b; border: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  letter-spacing: 0.1em;
+}
+.alert-cta:hover { border-color: var(--lime); color: var(--lime); }
+.alert-cta svg { width: 12px; height: 12px; }
+.pro-badge {
+  padding: 2px 6px; border-radius: 4px;
+  background: var(--lime); color: var(--bg);
+  font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700;
+}
+
+.history-body { padding: 20px; }
+.history-chart { display: flex; align-items: flex-end; gap: 2px; height: 96px; }
+.history-bar { flex: 1; background: #27272a; border-radius: 4px 4px 0 0; transition: background 0.2s; }
+.history-bar:hover { background: #3f3f46; }
+.history-bar.today { background: var(--lime); }
+.history-legend {
+  display: flex; justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-dim);
+  margin-top: 8px;
+}
+.history-trend { display: flex; align-items: center; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--rose); }
+.history-trend svg { width: 12px; height: 12px; }
+
+/* Pricing */
+.pricing-head { padding: 48px 0 16px; }
+.pricing-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); letter-spacing: 0.2em; }
+.pricing-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 48px; line-height: 0.9; margin-top: 8px;
+}
+@media (min-width: 640px) { .pricing-title { font-size: 96px; } }
+.pricing-title .lime { color: var(--lime); }
+.pricing-sub { font-size: 16px; color: var(--text-muted); margin-top: 20px; max-width: 576px; }
+@media (min-width: 640px) { .pricing-sub { font-size: 18px; } }
+
+.pricing-grid {
+  display: grid; grid-template-columns: 1fr; gap: 16px;
+  margin-top: 40px;
+}
+@media (min-width: 640px) { .pricing-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1024px) { .pricing-grid { grid-template-columns: repeat(4, 1fr); } }
+
+.plan-card {
+  position: relative;
+  background: linear-gradient(180deg, var(--bg-card-start) 0%, var(--bg-card-end) 100%);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px 28px;
+  display: flex; flex-direction: column;
+}
+.plan-card.highlight {
+  background: var(--lime); color: var(--bg); border-color: var(--lime);
+  box-shadow: 0 0 40px rgba(200, 240, 60, 0.15);
+}
+.plan-badge {
+  position: absolute; top: -12px; left: 24px;
+  padding: 4px 10px;
+  background: var(--bg); color: var(--lime);
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.2em;
+  border-radius: 4px;
+}
+.plan-season { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim); }
+.plan-card.highlight .plan-season { color: rgba(10,10,10,0.7); }
+.plan-name { font-family: 'Bebas Neue', sans-serif; font-size: 48px; margin-top: 8px; }
+.plan-price-wrap { display: flex; align-items: baseline; gap: 4px; margin-top: 20px; }
+.plan-price { font-family: 'Bebas Neue', sans-serif; font-size: 68px; line-height: 1; }
+.plan-price-cur { font-family: 'Bebas Neue', sans-serif; font-size: 30px; }
+.plan-period { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); }
+.plan-card.highlight .plan-period { color: rgba(10,10,10,0.6); }
+.plan-features { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-top: 24px; flex: 1; }
+.plan-feature { display: flex; align-items: flex-start; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+.plan-feature svg { width: 12px; height: 12px; margin-top: 2px; flex-shrink: 0; color: var(--lime); stroke-width: 3; }
+.plan-card.highlight .plan-feature svg { color: var(--bg); }
+.plan-feature-text { color: #d4d4d8; }
+.plan-card.highlight .plan-feature-text { color: var(--bg); }
+.plan-cta {
+  margin-top: 28px; width: 100%;
+  padding: 14px;
+  border-radius: 8px;
+  background: #18181b; border: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.15em;
+  transition: all 0.2s;
+}
+.plan-cta:hover { border-color: var(--lime); color: var(--lime); }
+.plan-card.highlight .plan-cta {
+  background: var(--bg); color: var(--text); border-color: var(--bg);
+}
+.plan-card.highlight .plan-cta:hover { background: #18181b; color: var(--text); border-color: #18181b; }
+
+.trust-grid {
+  display: grid; grid-template-columns: 1fr; gap: 16px;
+  margin-top: 40px;
+}
+@media (min-width: 640px) { .trust-grid { grid-template-columns: repeat(3, 1fr); } }
+.trust-card {
+  background: linear-gradient(180deg, var(--bg-card-start) 0%, var(--bg-card-end) 100%);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+.trust-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--lime); letter-spacing: 0.2em;
+  margin-bottom: 8px;
+}
+.trust-desc { font-size: 14px; color: #d4d4d8; }
+
+/* Footer */
+.footer { border-top: 1px solid var(--border-soft); margin-top: 80px; }
+.footer-inner { max-width: 1280px; margin: 0 auto; padding: 40px 16px; }
+@media (min-width: 640px) { .footer-inner { padding: 40px 24px; } }
+.footer-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+  margin-bottom: 32px;
+}
+@media (min-width: 640px) { .footer-grid { grid-template-columns: repeat(4, 1fr); } }
+.footer-brand { font-family: 'Bebas Neue', sans-serif; font-size: 30px; color: var(--lime); margin-bottom: 12px; }
+.footer-brand-meta { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); line-height: 1.6; }
+.footer-col-title { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); letter-spacing: 0.2em; margin-bottom: 12px; }
+.footer-col-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.footer-col-item { font-size: 14px; color: var(--text-muted); cursor: pointer; }
+.footer-col-item:hover { color: var(--lime); }
+.footer-bottom {
+  padding-top: 24px; border-top: 1px solid var(--border-soft);
+  display: flex; flex-direction: column; gap: 8px;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dimmer);
+}
+@media (min-width: 640px) { .footer-bottom { flex-direction: row; justify-content: space-between; } }
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="#" class="logo" onclick="goTo('home'); return false;">
+      <span class="logo-text">SKAP</span>
+      <span class="logo-sub">WEEKEND ENGINE</span>
+    </a>
+    <nav class="nav">
+      <button class="nav-link" data-nav="home" onclick="goTo('home')">CERCA</button>
+      <button class="nav-link" data-nav="pricing" onclick="goTo('pricing')">PIANI</button>
+      <button class="nav-cta">
+        <span class="nav-cta-dot pulse-dot"></span>
+        ACCEDI
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="ticker-wrapper">
+  <div class="ticker-track scroll-x" id="ticker">
+    <!-- Populated by JS -->
+  </div>
+</div>
+
+<!-- HOME VIEW -->
+<main class="view active" id="view-home">
+  <section class="hero">
+    <div class="hero-bg grid-bg"></div>
+    <div class="hero-inner">
+      <div class="hero-badge fade-up">
+        <span class="hero-badge-dot pulse-dot"></span>
+        <span id="hero-routes-count">4,120 rotte</span> · 47 aeroporti · prezzi live
+      </div>
+      <h1 class="hero-title fade-up" style="animation-delay: 0.05s; opacity: 0;">
+        DOVE VAI<br>
+        QUESTO<br>
+        <span class="lime">WEEKEND?</span>
+      </h1>
+      <p class="hero-sub fade-up" style="animation-delay: 0.2s; opacity: 0;">
+        Volo + ostello + vita giornaliera, sommati. <strong>Un solo numero.</strong> Ordinati dal più economico.
+      </p>
+    </div>
+  </section>
+
+  <section class="search-wrap fade-up" style="animation-delay: 0.35s; opacity: 0;">
+    <div class="search-card">
+      <div class="search-grid">
+        <div class="search-field">
+          <div class="field-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m17.8 19.2-2.8-9.2 4-4a2 2 0 0 0-2.8-2.8l-4 4-9.2-2.8a.5.5 0 0 0-.5.5v.8a.5.5 0 0 0 .15.4l5.85 4.6-2.2 2.2-1.8-.4a.5.5 0 0 0-.4.1l-.6.6a.5.5 0 0 0 .1.8l2.4 1.2 1.2 2.4a.5.5 0 0 0 .8.1l.6-.6a.5.5 0 0 0 .1-.4l-.4-1.8 2.2-2.2 4.6 5.85a.5.5 0 0 0 .4.15h.8a.5.5 0 0 0 .5-.5z"/></svg>
+            PARTI DA
+          </div>
+          <select class="field-value-select" id="origin-select">
+            <option value="BERGAMO">BERGAMO</option>
+            <option value="MILANO">MILANO</option>
+            <option value="VENEZIA">VENEZIA</option>
+            <option value="BOLOGNA">BOLOGNA</option>
+            <option value="ROMA">ROMA</option>
+            <option value="NAPOLI">NAPOLI</option>
+          </select>
+        </div>
+        <div class="search-field">
+          <div class="field-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 20v-7h20v7M4 13V9a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v4"/></svg>
+            NOTTI
+          </div>
+          <div class="nights-control">
+            <button class="nights-btn" onclick="changeNights(-1)">−</button>
+            <span class="nights-value" id="nights-value">2</span>
+            <button class="nights-btn" onclick="changeNights(1)">+</button>
+          </div>
+        </div>
+        <div class="search-field">
+          <div class="field-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM16 12h.01"/></svg>
+            <span>BUDGET · <span id="budget-value">180</span>€</span>
+          </div>
+          <div class="budget-wrap">
+            <input type="range" class="budget-slider" id="budget-slider" min="80" max="400" step="10" value="180">
+            <div class="budget-range-labels"><span>80€</span><span>400€</span></div>
+          </div>
+        </div>
+      </div>
+      <button class="search-cta" onclick="goTo('results')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        TROVA WEEKEND
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <section class="mood-wrap">
+    <div class="mood-filters" id="mood-filters-home"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-eyebrow">// TOP 3 OGGI</div>
+        <h2 class="section-title">PIÙ ECONOMICHE ADESSO</h2>
+      </div>
+      <button class="section-link" onclick="goTo('results')">
+        <span>TUTTE (<span id="trending-count">10</span>)</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+    <div class="cards-stack" id="trending-cards"></div>
+  </section>
+</main>
+
+<!-- RESULTS VIEW -->
+<main class="view" id="view-results">
+  <section style="padding: 32px 0 0;">
+    <button class="back-btn" onclick="goTo('home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      MODIFICA RICERCA
+    </button>
+    <div class="results-head">
+      <div>
+        <div class="section-eyebrow">// RISULTATI</div>
+        <h1 class="results-count"><span class="num" id="results-num">10</span> DESTINAZIONI</h1>
+        <div class="results-meta">
+          <span>DA <span id="results-origin">BERGAMO</span></span>
+          <span class="sep">/</span>
+          <span><span id="results-nights">2</span> NOTTI</span>
+          <span class="sep">/</span>
+          <span>BUDGET MAX <span id="results-budget">180</span>€</span>
+        </div>
+      </div>
+      <div class="chips-row">
+        <button class="chip active">PREZZO ↑</button>
+        <button class="chip">DURATA VOLO</button>
+        <button class="chip">VALUTAZIONE</button>
+        <button class="chip">METEO ☀</button>
+      </div>
+    </div>
+
+    <div class="mood-filters" id="mood-filters-results" style="margin-bottom: 16px; overflow-x: auto;"></div>
+
+    <div class="cards-stack" id="results-cards"></div>
+    <div id="empty-state" class="empty-state hidden">
+      <div class="empty-face">:/</div>
+      <div class="empty-text">NIENTE SOTTO <span id="empty-budget">180</span>€ OGGI.<br>ALZA IL BUDGET O CAMBIA ORIGINE.</div>
+    </div>
+
+    <div class="disclaimer">
+      STIME · ULT. AGG 02:14 FA · I PREZZI POSSONO VARIARE<br>
+      VERIFICA SUL SITO DELLA COMPAGNIA PRIMA DI PRENOTARE
+    </div>
+  </section>
+</main>
+
+<!-- DETAIL VIEW -->
+<main class="view" id="view-detail">
+  <section style="padding: 32px 0 0;">
+    <button class="back-btn" onclick="goTo('results')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      TORNA AI RISULTATI
+    </button>
+    <div id="detail-content"></div>
+  </section>
+</main>
+
+<!-- PRICING VIEW -->
+<main class="view" id="view-pricing">
+  <div class="pricing-head">
+    <div class="pricing-eyebrow">// PIANI</div>
+    <h1 class="pricing-title">PAGHI SOLO<br>QUANDO <span class="lime">VIAGGI</span>.</h1>
+    <p class="pricing-sub">Abbonamenti stagionali: attivi solo nei mesi in cui davvero parti. L'Annual Pass costa come 6 mesi ma vale 12.</p>
+  </div>
+
+  <div class="pricing-grid" id="pricing-grid"></div>
+
+  <div class="trust-grid">
+    <div class="trust-card">
+      <div class="trust-title">✓ STRIPE SECURE</div>
+      <div class="trust-desc">Pagamenti criptati. Disdici con un click dalla dashboard.</div>
+    </div>
+    <div class="trust-card">
+      <div class="trust-title">✓ 14GG DI RECESSO</div>
+      <div class="trust-desc">Rimborso integrale se cambi idea, come da normativa EU.</div>
+    </div>
+    <div class="trust-card">
+      <div class="trust-title">✓ NIENTE SORPRESE</div>
+      <div class="trust-desc">Email 7 giorni prima di ogni rinnovo. Nessun dark pattern.</div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">SKAP</div>
+        <div class="footer-brand-meta">
+          WEEKEND ENGINE<br>
+          BUILT IN CREMONA · ITALY<br>
+          v0.1.0 — DEMO
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">PRODOTTO</div>
+        <ul class="footer-col-list">
+          <li class="footer-col-item">Come funziona</li>
+          <li class="footer-col-item">Piani</li>
+          <li class="footer-col-item">Changelog</li>
+          <li class="footer-col-item">Roadmap</li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">LEGALE</div>
+        <ul class="footer-col-list">
+          <li class="footer-col-item">Privacy</li>
+          <li class="footer-col-item">Cookie</li>
+          <li class="footer-col-item">Termini</li>
+          <li class="footer-col-item">GDPR</li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">SOCIAL</div>
+        <ul class="footer-col-list">
+          <li class="footer-col-item">Instagram</li>
+          <li class="footer-col-item">TikTok</li>
+          <li class="footer-col-item">Newsletter</li>
+          <li class="footer-col-item">Feedback</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 SKAP · STIME · VERIFICA SUL SITO DELLA COMPAGNIA PRIMA DI PRENOTARE</div>
+      <div>MADE WITH ∅ HYPE</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ================================= DATA ================================= */
+const DESTINATIONS = [
+  { id:'bud', name:'BUDAPEST', country:'UNGHERIA', flag:'🇭🇺', originAirport:'BGY', destAirport:'BUD', airlines:['Ryanair','Wizz Air'],
+    image:'https://images.unsplash.com/photo-1541849546-216549ae216d?w=800&q=80',
+    flight:{main:38, min:30, max:90, label:'early book.'}, hostel:{perNight:14, type:'dorm 8p'}, life:{perDay:22},
+    totalLabel:'scenario ottimale', hours:1.8, weather:18, currency:'HUF',
+    why:'Terme, ruin bar, birra a 2€. Il paradiso degli ostelli europei.',
+    tags:[{label:'TERME ROMANE',type:'iconic'},{label:'RUIN BARS',type:'iconic'},{label:'BIRRA 2€',type:'positive'},{label:'METRO OK',type:'positive'}],
+    moods:['party','culture','budget'] },
+  { id:'buc', name:'BUCAREST', country:'ROMANIA', flag:'🇷🇴', originAirport:'BGY', destAirport:'OTP', airlines:['Ryanair','Wizz Air','Blue Air'],
+    image:'https://images.unsplash.com/photo-1584646098378-0874589d76b1?w=800&q=80',
+    flight:{main:52, min:42, max:110, label:'medio'}, hostel:{perNight:11, type:'dorm 6p'}, life:{perDay:18},
+    totalLabel:'scenario ottimale', hours:2.3, weather:15, currency:'RON',
+    why:'Est Europa vera. Palazzo Parlamento enorme, vita notturna pazza, tutto costa la metà.',
+    tags:[{label:'PARLAMENTO #2 MONDO',type:'iconic'},{label:'NIGHTLIFE INTENSA',type:'positive'},{label:'ECONOMICA',type:'positive'},{label:'TAXI ABUSIVI',type:'warning'}],
+    moods:['party','culture','budget'] },
+  { id:'kra', name:'CRACOVIA', country:'POLONIA', flag:'🇵🇱', originAirport:'BGY', destAirport:'KRK', airlines:['Ryanair'],
+    image:'https://images.unsplash.com/photo-1607837401033-a9baef69a2b4?w=800&q=80',
+    flight:{main:48, min:38, max:95, label:'medio'}, hostel:{perNight:12, type:'dorm 6p'}, life:{perDay:24},
+    totalLabel:'scenario ottimale', hours:2.0, weather:12, currency:'PLN',
+    why:'Piazza medievale più grande d\'Europa. Auschwitz a 1h. Vodka a fiumi.',
+    tags:[{label:'AUSCHWITZ 1H',type:'iconic'},{label:'MINIERA SALE',type:'iconic'},{label:'VODKA ECONOMICA',type:'positive'},{label:'FREDDO SERIO',type:'warning'}],
+    moods:['culture','budget'] },
+  { id:'prg', name:'PRAGA', country:'REP. CECA', flag:'🇨🇿', originAirport:'BGY', destAirport:'PRG', airlines:['Ryanair','Smartwings'],
+    image:'https://images.unsplash.com/photo-1519677100203-a0e668c92439?w=800&q=80',
+    flight:{main:55, min:42, max:120, label:'picco'}, hostel:{perNight:17, type:'dorm 6p'}, life:{perDay:28},
+    totalLabel:'scenario realistico', hours:1.6, weather:14, currency:'CZK',
+    why:'Castello più grande al mondo, birra che costa meno dell\'acqua, centro UNESCO.',
+    tags:[{label:'CASTELLO UNESCO',type:'iconic'},{label:'BIRRA < ACQUA',type:'positive'},{label:'TROPPI TURISTI',type:'warning'},{label:'FREGATURE CAMBIO',type:'danger'}],
+    moods:['culture','party'] },
+  { id:'ath', name:'ATENE', country:'GRECIA', flag:'🇬🇷', originAirport:'BGY', destAirport:'ATH', airlines:['Ryanair','Aegean'],
+    image:'https://images.unsplash.com/photo-1555993539-1732b0258235?w=800&q=80',
+    flight:{main:65, min:50, max:140, label:'medio'}, hostel:{perNight:17, type:'dorm 6p'}, life:{perDay:24},
+    totalLabel:'scenario realistico', hours:2.8, weather:22, currency:'EUR',
+    why:'Acropoli + souvlaki a 3€ + spiaggia a 30min. Weekend completo.',
+    tags:[{label:'ACROPOLI',type:'iconic'},{label:'SPIAGGIA 30MIN',type:'positive'},{label:'SOUVLAKI 3€',type:'positive'},{label:'METRO CHIUDE 00:30',type:'warning'}],
+    moods:['sea','culture'] },
+  { id:'mar', name:'MARRAKECH', country:'MAROCCO', flag:'🇲🇦', originAirport:'BGY', destAirport:'RAK', airlines:['Ryanair'],
+    image:'https://images.unsplash.com/photo-1597212720291-936a7efd2139?w=800&q=80',
+    flight:{main:89, min:75, max:180, label:'medio'}, hostel:{perNight:14, type:'riad dorm'}, life:{perDay:22},
+    totalLabel:'scenario realistico', hours:3.4, weather:26, currency:'MAD',
+    why:'Souk impazziti, tè alla menta, Sahara a portata di mano. Altro pianeta.',
+    tags:[{label:'ESPERIENZA UNICA',type:'iconic'},{label:'SAHARA TOUR',type:'iconic'},{label:'CONTRATTARE SEMPRE',type:'warning'},{label:'DONNE SOLE CAUTE',type:'danger'}],
+    moods:['culture'] },
+  { id:'val', name:'VALENCIA', country:'SPAGNA', flag:'🇪🇸', originAirport:'BGY', destAirport:'VLC', airlines:['Ryanair','Vueling'],
+    image:'https://images.unsplash.com/photo-1599082304032-31f18039e80a?w=800&q=80',
+    flight:{main:62, min:50, max:130, label:'medio'}, hostel:{perNight:21, type:'dorm 6p'}, life:{perDay:28},
+    totalLabel:'scenario realistico', hours:2.1, weather:21, currency:'EUR',
+    why:'Paella dove è nata. Spiaggia urbana. Città delle Arti. Barcellona senza la folla.',
+    tags:[{label:'PAELLA ORIGINALE',type:'iconic'},{label:'SPIAGGIA URBANA',type:'positive'},{label:'MENO TURISTI',type:'positive'}],
+    moods:['sea','culture'] },
+  { id:'por', name:'PORTO', country:'PORTOGALLO', flag:'🇵🇹', originAirport:'BGY', destAirport:'OPO', airlines:['Ryanair','TAP'],
+    image:'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=800&q=80',
+    flight:{main:58, min:48, max:140, label:'medio'}, hostel:{perNight:23, type:'dorm 4p'}, life:{perDay:30},
+    totalLabel:'scenario realistico', hours:2.9, weather:19, currency:'EUR',
+    why:'Città sul fiume Douro, cantine di Porto, francesinha. Europa del Sud autentica.',
+    tags:[{label:'PORT WINE TOUR',type:'iconic'},{label:'LIBRERIA LELLO',type:'iconic'},{label:'FRANCESINHA',type:'positive'},{label:'SALITE RIPIDE',type:'warning'}],
+    moods:['culture','sea'] },
+  { id:'ber', name:'BERLINO', country:'GERMANIA', flag:'🇩🇪', originAirport:'BGY', destAirport:'BER', airlines:['Ryanair','easyJet'],
+    image:'https://images.unsplash.com/photo-1587330979470-3016b6702d89?w=800&q=80',
+    flight:{main:45, min:35, max:120, label:'early book.'}, hostel:{perNight:29, type:'dorm 6p'}, life:{perDay:31},
+    totalLabel:'scenario realistico', hours:1.7, weather:13, currency:'EUR',
+    why:'Berghain, street art, Muro, techno, kebab a 4€. Niente è proibito.',
+    tags:[{label:'BERGHAIN',type:'iconic'},{label:'STREET ART MONDIALE',type:'iconic'},{label:'CLUB NON-STOP',type:'positive'},{label:'OSTELLI CARI',type:'warning'}],
+    moods:['party','culture'] },
+  { id:'bar', name:'BARCELLONA', country:'SPAGNA', flag:'🇪🇸', originAirport:'BGY', destAirport:'BCN', airlines:['Ryanair','Vueling'],
+    image:'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80',
+    flight:{main:95, min:80, max:130, label:'last min.'}, hostel:{perNight:22, type:'dorm 6p'}, life:{perDay:35},
+    totalLabel:'scenario ottimale', hours:1.9, weather:20, currency:'EUR',
+    why:'Sagrada, spiaggia, tapas, Gaudí ovunque. Il classico che ormai costa.',
+    tags:[{label:'ICONICO',type:'iconic'},{label:'BARCA+SAGRADA',type:'iconic'},{label:'CARA DI NOTTE',type:'warning'},{label:'BORSEGGI FREQUENTI',type:'danger'}],
+    moods:['sea','party','culture'] },
+];
+
+const PLANS = [
+  { id:'free', name:'FREE', price:0, period:'', subtitle:'Prova il sistema', features:['3 ricerche al giorno','Risultati standard','No alert, no calendario'], cta:'INIZIA GRATIS', highlight:false },
+  { id:'summer', name:'ESTATE', price:9.90, period:'/mese', subtitle:'GIU · LUG · AGO', features:['Ricerche illimitate','Price alert via email','Calendario prezzi 12 mesi','Export PDF itinerari','Dati storici prezzi'], cta:'ATTIVA ESTATE', highlight:false },
+  { id:'winter', name:'INVERNO', price:7.90, period:'/mese', subtitle:'DIC · GEN · FEB', features:['Tutto di Estate','Ski destinations incluse','Skipass + trasporti','Capodanno dinamico'], cta:'ATTIVA INVERNO', highlight:false },
+  { id:'annual', name:'ANNUAL', price:59, period:'/anno', subtitle:'12 MESI · RISPARMI 40€', features:['Tutte le feature','365 giorni attivo','Early access novità','Priority support','2 price alert VIP'], cta:'ANNUAL PASS', highlight:true },
+];
+
+const MOODS = [
+  { id:'all', label:'TUTTE', icon:'◉' },
+  { id:'party', label:'PARTY', icon:'◈' },
+  { id:'sea', label:'MARE', icon:'≈' },
+  { id:'culture', label:'CULTURA', icon:'♦' },
+  { id:'budget', label:'MAX LOW', icon:'€' },
+];
+
+const TICKER_ITEMS = [
+  { text:'BGY→BUD · 38€ · 14 POSTI', type:'live' },
+  { text:'MXP→ATH · 65€ · 3 POSTI', type:'live' },
+  { text:'VCE→KRK · 48€ · 22 POSTI', type:'live' },
+  { text:'BGY→MAD · +12% 7GG', type:'up' },
+  { text:'MXP→LIS · 71€ · 31 POSTI', type:'live' },
+  { text:'BGY→PRG · -18% 7GG', type:'down' },
+  { text:'VCE→BER · 52€ · 9 POSTI', type:'live' },
+  { text:'SYS · ULT AGG 02:14', type:'sys' },
+];
+
+/* ================================= STATE ================================= */
+const state = {
+  view: 'home',
+  origin: 'BERGAMO',
+  nights: 2,
+  budget: 180,
+  mood: 'all',
+  selectedId: null,
+};
+
+/* ================================= HELPERS ================================= */
+function computeTotals(nights) {
+  return DESTINATIONS.map(d => {
+    const flight = d.flight.main;
+    const hostel = d.hostel.perNight * nights;
+    const life = d.life.perDay * nights;
+    return { ...d, computed: { flight, hostel, life, total: flight + hostel + life } };
+  }).sort((a,b) => a.computed.total - b.computed.total);
+}
+function filterByBudgetAndMood(arr) {
+  return arr.filter(d => {
+    if (d.computed.total > state.budget) return false;
+    if (state.mood !== 'all' && !d.moods.includes(state.mood)) return false;
+    return true;
+  });
+}
+
+/* ================================= RENDER ================================= */
+function renderTicker() {
+  const track = document.getElementById('ticker');
+  const html = TICKER_ITEMS.map(i => {
+    if (i.type === 'live') return `<span class="ticker-item"><span class="dot pulse-dot">●</span> ${i.text}</span>`;
+    if (i.type === 'up') return `<span class="ticker-item"><span class="ticker-up">▲</span> ${i.text}</span>`;
+    if (i.type === 'down') return `<span class="ticker-item"><span class="ticker-down">▼</span> ${i.text}</span>`;
+    return `<span class="ticker-item">${i.text}</span>`;
+  }).join('');
+  track.innerHTML = `<div class="ticker-group">${html}</div><div class="ticker-group">${html}</div>`;
+}
+
+function renderMoodFilters(containerId) {
+  const c = document.getElementById(containerId);
+  c.innerHTML = MOODS.map(m =>
+    `<button class="mood-btn ${state.mood === m.id ? 'active' : ''}" onclick="setMood('${m.id}')">
+      <span class="mood-btn-icon">${m.icon}</span>${m.label}
+    </button>`
+  ).join('');
+}
+
+function cardHTML(d, rank) {
+  const c = d.computed;
+  return `
+    <button class="dest-card" onclick="openDetail('${d.id}')">
+      <div class="dest-image">
+        <img src="${d.image}" alt="${d.name}" loading="lazy" onerror="this.style.display='none'" />
+        <div class="dest-image-overlay"></div>
+        <div class="dest-image-rank">#${rank}</div>
+        <div class="dest-image-price">~${c.total}€</div>
+        <div class="dest-image-badges">
+          <div class="dest-image-title">${d.name}</div>
+          <div class="dest-image-flag">${d.flag}</div>
+        </div>
+      </div>
+      <div class="dest-header">
+        <div class="dest-identity">
+          <div class="dest-text">
+            <div class="dest-meta">${d.country} · ${d.originAirport}→${d.destAirport} · ${d.airlines.join('/')}</div>
+          </div>
+        </div>
+      </div>
+      <div class="dest-stats">
+        <div class="stat-cell">
+          <div class="stat-cell-label"><span class="stat-cell-emoji">✈</span>VOLO A/R</div>
+          <div class="stat-cell-value">~${d.flight.main}€</div>
+          <div class="stat-cell-sub">${d.flight.label} · ${d.flight.min}-${d.flight.max}€</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-cell-label"><span class="stat-cell-emoji">🛏</span>OSTELLO ${state.nights}N</div>
+          <div class="stat-cell-value">~${c.hostel}€</div>
+          <div class="stat-cell-sub">~${d.hostel.perNight}€/notte · ${d.hostel.type}</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-cell-label"><span class="stat-cell-emoji">🍔</span>VITA ${state.nights}GG</div>
+          <div class="stat-cell-value">~${c.life}€</div>
+          <div class="stat-cell-sub">~${d.life.perDay}€/giorno</div>
+        </div>
+        <div class="stat-cell highlight">
+          <div class="stat-cell-label"><span class="stat-cell-emoji">💰</span>TOTALE</div>
+          <div class="stat-cell-value">~${c.total}€</div>
+          <div class="stat-cell-sub">${d.totalLabel}</div>
+        </div>
+      </div>
+      <div class="dest-bars">
+        <div class="bar-row">
+          <div class="bar-label">VOLO</div>
+          <div class="bar-track"><div class="bar-fill volo" style="width:${(c.flight/c.total*100)}%"></div></div>
+          <div class="bar-value">${c.flight}€</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">OSTELLO</div>
+          <div class="bar-track"><div class="bar-fill ostello" style="width:${(c.hostel/c.total*100)}%"></div></div>
+          <div class="bar-value">${c.hostel}€</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">VITA</div>
+          <div class="bar-track"><div class="bar-fill vita" style="width:${(c.life/c.total*100)}%"></div></div>
+          <div class="bar-value">${c.life}€</div>
+        </div>
+      </div>
+      <div class="dest-tags">
+        ${d.tags.map(t => `<span class="tag ${t.type}">${t.label}</span>`).join('')}
+      </div>
+    </button>
+  `;
+}
+
+function renderTrending() {
+  const totals = computeTotals(state.nights);
+  const filtered = filterByBudgetAndMood(totals);
+  const top3 = filtered.slice(0, 3);
+  document.getElementById('trending-cards').innerHTML = top3.map((d,i) => cardHTML(d, i+1)).join('') || '<div class="empty-state"><div class="empty-face">:/</div><div class="empty-text">Nessuna destinazione trovata con questi filtri.</div></div>';
+  document.getElementById('trending-count').textContent = filtered.length;
+  document.getElementById('hero-routes-count').textContent = (DESTINATIONS.length * 412).toLocaleString('it-IT') + ' rotte';
+}
+
+function renderResults() {
+  const totals = computeTotals(state.nights);
+  const filtered = filterByBudgetAndMood(totals);
+  const container = document.getElementById('results-cards');
+  const empty = document.getElementById('empty-state');
+  if (filtered.length === 0) {
+    container.innerHTML = '';
+    empty.classList.remove('hidden');
+    document.getElementById('empty-budget').textContent = state.budget;
+  } else {
+    container.innerHTML = filtered.map((d,i) => cardHTML(d, i+1)).join('');
+    empty.classList.add('hidden');
+  }
+  document.getElementById('results-num').textContent = filtered.length;
+  document.getElementById('results-origin').textContent = state.origin;
+  document.getElementById('results-nights').textContent = state.nights;
+  document.getElementById('results-budget').textContent = state.budget;
+}
+
+function renderDetail() {
+  const d = DESTINATIONS.find(x => x.id === state.selectedId);
+  if (!d) return;
+  const flight = d.flight.main;
+  const hostel = d.hostel.perNight * state.nights;
+  const life = d.life.perDay * state.nights;
+  const total = flight + hostel + life;
+  const alertPrice = Math.floor(total * 0.85);
+
+  const barsHeights = [72,78,65,70,62,55,58,52,48,55,52,44,48,40];
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-hero">
+      <div class="detail-hero-image">
+        <img src="${d.image}" alt="${d.name}" onerror="this.style.display='none'" />
+        <div class="detail-hero-image-overlay"></div>
+        <div class="detail-hero-image-title">
+          <div class="detail-hero-image-route">
+            <span>${state.origin}</span>
+            <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            <span>${d.destAirport}</span>
+            <span style="color:var(--text-dimmer)">·</span>
+            <span>${d.country}</span>
+            <span>${d.flag}</span>
+            <span style="color:var(--text-dimmer)">·</span>
+            <span>${d.hours}H VOLO</span>
+          </div>
+          <h1>${d.name}</h1>
+        </div>
+      </div>
+      <div class="detail-hero-inner">
+        <div style="min-width:0;">
+          <p class="detail-why">${d.why}</p>
+        </div>
+        <div class="detail-price-wrap">
+          <div class="detail-price-label">TOTALE STIMATO</div>
+          <div class="detail-price">~${total}<span class="cur">€</span></div>
+          <div class="detail-price-sub">${d.totalLabel} · ${state.nights}N</div>
+        </div>
+      </div>
+      <div class="detail-tags">
+        ${d.tags.map(t => `<span class="tag ${t.type}">${t.label}</span>`).join('')}
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <div>
+        <div class="breakdown-card">
+          <div class="breakdown-head">
+            <div>// BREAKDOWN ${state.nights} NOTTI</div>
+            <a href="#" onclick="return false;">EXPORT PDF →</a>
+          </div>
+          ${costRowHTML('✈','VOLO ANDATA/RITORNO',`${state.origin} → ${d.destAirport} · ${d.airlines.join(' / ')}`, flight, total, [`Min 30gg: ${d.flight.min}€`,`Max storico: ${d.flight.max}€`,`Durata: ${d.hours}h`])}
+          ${costRowHTML('🛏','OSTELLO',`${state.nights} notti · ${d.hostel.type} · ~${d.hostel.perNight}€/notte`, hostel, total, ['Letto in dormitorio','Colazione inclusa','WiFi, lockers'])}
+          ${costRowHTML('🍔','VITA GIORNALIERA',`${state.nights} giorni · ~${d.life.perDay}€/giorno`, life, total, ['Pasti medi','Trasporti pubblici','2 drink + attrazione'])}
+          <div class="total-row">
+            <div>
+              <div class="total-label">TOTALE ${state.nights}N · ${d.totalLabel.toUpperCase()}</div>
+              <div class="total-main">TUTTO COMPRESO</div>
+            </div>
+            <div class="total-value">~${total}€</div>
+          </div>
+        </div>
+
+        <div class="cta-grid">
+          <button class="cta-card primary">
+            <div class="cta-top">
+              <div class="cta-label">PRENOTA VOLO</div>
+              <svg class="cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </div>
+            <div class="cta-name">${d.airlines[0].toUpperCase()}</div>
+            <div class="cta-sub">VOLO DIRETTO · ${d.hours}H · ~${d.flight.main}€</div>
+            <div class="cta-warning">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              OFFERTA SCADE IN 4H · 14 POSTI
+            </div>
+          </button>
+          <button class="cta-card secondary">
+            <div class="cta-top">
+              <div class="cta-label">PRENOTA OSTELLO</div>
+              <svg class="cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </div>
+            <div class="cta-name">WOMBAT'S HOSTEL</div>
+            <div class="cta-sub">★ 8.9 · CENTRO · ~${d.hostel.perNight}€/N</div>
+            <div class="cta-warning">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+              WIFI · COLAZIONE · LOCKERS
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <div class="side-card">
+          <div class="map-box grid-bg">
+            <div class="map-pin">
+              <div>
+                <div class="map-pin-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 10c0 7-8 13-8 13s-8-6-8-13a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <div class="map-name">${d.name}</div>
+                <div class="map-country">${d.country}</div>
+              </div>
+            </div>
+            <div class="map-toggles">
+              <span class="map-toggle">SAT</span>
+              <span class="map-toggle active">MAP</span>
+            </div>
+            <div class="map-tag">// MAP</div>
+          </div>
+        </div>
+
+        <div class="side-card">
+          <div class="side-head">// QUICK FACTS</div>
+          <div class="facts-list">
+            ${factRow('🌡','Meteo oggi',`${d.weather}°C`)}
+            ${factRow('💰','Valuta', d.currency)}
+            ${factRow('🕐','Fuso', d.currency === 'EUR' ? 'Stessa ora' : '+1h')}
+            ${factRow('✈','Scalo','Diretto')}
+          </div>
+        </div>
+
+        <div class="side-card">
+          <div class="side-head">
+            <span>// PRICE ALERT</span>
+            <span class="pro-badge">PRO</span>
+          </div>
+          <div class="alert-body">
+            <div class="alert-title">Avvisami sotto</div>
+            <div class="alert-price-wrap">
+              <span class="alert-price">${alertPrice}€</span>
+              <span class="alert-pct">(-15%)</span>
+            </div>
+            <div class="alert-presets">
+              <button class="alert-preset">-10%</button>
+              <button class="alert-preset">-15%</button>
+              <button class="alert-preset">-20%</button>
+            </div>
+            <button class="alert-cta">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              ATTIVA · SOLO ABBONATI
+            </button>
+          </div>
+        </div>
+
+        <div class="side-card">
+          <div class="side-head">
+            <span>// STORICO 30GG VOLO</span>
+            <span class="history-trend">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 17l-8.5-8.5-5 5L2 7"/><path d="M16 17h6v-6"/></svg>
+              -18%
+            </span>
+          </div>
+          <div class="history-body">
+            <div class="history-chart">
+              ${barsHeights.map((h,i) => `<div class="history-bar ${i === barsHeights.length-1 ? 'today' : ''}" style="height:${h}%"></div>`).join('')}
+            </div>
+            <div class="history-legend">
+              <span>30GG FA</span>
+              <span>MAX 89€</span>
+              <span class="lime">OGGI ${d.flight.main}€</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  `;
+}
+
+function costRowHTML(emoji, label, detail, value, total, extras) {
+  const pct = (value/total*100);
+  return `
+    <div class="cost-row">
+      <div class="cost-row-top">
+        <div class="cost-row-left">
+          <span class="cost-emoji">${emoji}</span>
+          <div class="cost-info">
+            <div class="cost-label">${label}</div>
+            <div class="cost-detail">${detail}</div>
+          </div>
+        </div>
+        <div class="cost-value">~${value}€</div>
+      </div>
+      <div class="cost-bar"><div class="cost-bar-fill" style="width:${pct}%"></div></div>
+      <div class="cost-extras">
+        ${extras.map(e => `<span>· ${e}</span>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function factRow(emoji, label, value) {
+  return `
+    <div class="fact-row">
+      <div class="fact-left">
+        <span>${emoji}</span>
+        <span>${label}</span>
+      </div>
+      <div class="fact-value">${value}</div>
+    </div>
+  `;
+}
+
+function renderPricing() {
+  document.getElementById('pricing-grid').innerHTML = PLANS.map(p => `
+    <div class="plan-card ${p.highlight ? 'highlight' : ''}">
+      ${p.highlight ? '<div class="plan-badge">CONSIGLIATO</div>' : ''}
+      <div class="plan-season">${p.subtitle}</div>
+      <div class="plan-name">${p.name}</div>
+      <div class="plan-price-wrap">
+        <span class="plan-price">${p.price === 0 ? '0' : p.price.toString().replace('.', ',')}</span>
+        <span class="plan-price-cur">€</span>
+        <span class="plan-period">${p.period}</span>
+      </div>
+      <ul class="plan-features">
+        ${p.features.map(f => `
+          <li class="plan-feature">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6L9 17l-5-5"/></svg>
+            <span class="plan-feature-text">${f}</span>
+          </li>
+        `).join('')}
+      </ul>
+      <button class="plan-cta">${p.cta} →</button>
+    </div>
+  `).join('');
+}
+
+/* ================================= EVENTS ================================= */
+function goTo(view) {
+  state.view = view;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(n => {
+    n.classList.toggle('active', n.dataset.nav === view);
+  });
+  window.scrollTo(0, 0);
+  if (view === 'home') renderTrending();
+  if (view === 'results') renderResults();
+  if (view === 'detail') renderDetail();
+  if (view === 'pricing') renderPricing();
+}
+
+function changeNights(delta) {
+  state.nights = Math.max(1, Math.min(7, state.nights + delta));
+  document.getElementById('nights-value').textContent = state.nights;
+  renderTrending();
+}
+
+function setMood(m) {
+  state.mood = m;
+  renderMoodFilters('mood-filters-home');
+  renderMoodFilters('mood-filters-results');
+  if (state.view === 'home') renderTrending();
+  if (state.view === 'results') renderResults();
+}
+
+function openDetail(id) {
+  state.selectedId = id;
+  goTo('detail');
+}
+
+/* ================================= INIT ================================= */
+document.getElementById('origin-select').addEventListener('change', e => { state.origin = e.target.value; });
+document.getElementById('budget-slider').addEventListener('input', e => {
+  state.budget = parseInt(e.target.value);
+  document.getElementById('budget-value').textContent = state.budget;
+  renderTrending();
+});
+
+renderTicker();
+renderMoodFilters('mood-filters-home');
+renderMoodFilters('mood-filters-results');
+renderTrending();
+renderPricing();
+</script>
+</body>
+</html>
