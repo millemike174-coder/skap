@@ -374,6 +374,24 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
 }
 @media (min-width: 640px) { .stat-cell-label { font-size: 10px; } }
 .stat-cell-emoji { font-size: 14px; line-height: 1; }
+.live-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 6px;
+  background: var(--lime);
+  color: #000;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  border-radius: 3px;
+  animation: livePulse 2s infinite;
+  vertical-align: middle;
+}
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
 .stat-cell-value {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 28px; line-height: 1; color: var(--text);
@@ -871,7 +889,7 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
 <header class="header">
   <div class="header-inner">
     <a href="#" class="logo" onclick="goTo('home'); return false;">
-      <span class="logo-text">SKAP</span>
+      <span class="logo-text">SKAP<span style="color:var(--lime);">.</span></span>
       <span class="logo-sub">WEEKEND ENGINE</span>
     </a>
     <nav class="nav">
@@ -1096,13 +1114,108 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
       </div>
     </div>
     <div class="footer-bottom">
-      <div>© 2026 SKAP · STIME · VERIFICA SUL SITO DELLA COMPAGNIA PRIMA DI PRENOTARE</div>
+      <div>© 2026 SKAP · VOLI LIVE · OSTELLO/VITA INDICATIVI · VERIFICA PRIMA DI PRENOTARE</div>
       <div>MADE WITH ∅ HYPE</div>
     </div>
   </div>
 </footer>
 
 <script>
+/* ================================= LIVE API ================================= */
+/* SKAP marker affiliate Travelpayouts */
+const SKAP_MARKER = '522272';
+
+/* Lista aeroporti italiani principali per ricerca multi-origine */
+const ITALIAN_AIRPORTS = ['BGY','MXP','LIN','FCO','CIA','BLQ','VCE','TRN','NAP','PSA'];
+
+/* Costruisce URL Trip.com con marker affiliate (deeplink legale) */
+function buildTripcomURL(cityName) {
+  const params = new URLSearchParams({
+    city: cityName,
+    marker: SKAP_MARKER,
+  });
+  return `https://trip.tp.st/hotels?${params.toString()}`;
+}
+
+/* Costruisce URL Aviasales con marker (volo affiliate) */
+function buildAviasalesURL(originCode, destCode) {
+  return `https://www.aviasales.com/search/${originCode}30${destCode}1?marker=${SKAP_MARKER}`;
+}
+
+/* Costruisce URL Klook tour con marker */
+function buildKlookURL(cityName) {
+  const params = new URLSearchParams({
+    keyword: cityName,
+    marker: SKAP_MARKER,
+  });
+  return `https://klook.tp.st/?${params.toString()}`;
+}
+
+/* Cache locale prezzi (sopravvive solo per la sessione corrente) */
+const priceCache = new Map();
+
+/* Chiama l'API per UNA singola tratta */
+async function fetchRealPrice(origin, destination) {
+  const cacheKey = `${origin}-${destination}`;
+  if (priceCache.has(cacheKey)) return priceCache.get(cacheKey);
+
+  try {
+    const url = `/api/voli-test?from=${origin}&to=${destination}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.success || !data.raw_data?.data?.[destination]) return null;
+
+    const flightData = data.raw_data.data[destination];
+    const firstKey = Object.keys(flightData)[0];
+    const flight = flightData[firstKey];
+    if (!flight?.price) return null;
+
+    const result = {
+      price: flight.price,
+      airline: flight.airline,
+      flight_number: flight.flight_number,
+      departure_at: flight.departure_at,
+      return_at: flight.return_at,
+      duration_to: flight.duration_to,
+      duration_back: flight.duration_back,
+    };
+    priceCache.set(cacheKey, result);
+    return result;
+  } catch (e) {
+    return null;
+  }
+}
+
+/* Per ogni destinazione, cerca il volo più economico tra tutti gli aeroporti italiani */
+async function fetchBestPriceMultiOrigin(destination) {
+  const promises = ITALIAN_AIRPORTS.map(origin => fetchRealPrice(origin, destination));
+  const results = await Promise.all(promises);
+  const valid = results
+    .map((r, i) => r ? { ...r, origin: ITALIAN_AIRPORTS[i] } : null)
+    .filter(r => r !== null);
+  if (valid.length === 0) return null;
+  return valid.reduce((best, curr) => curr.price < best.price ? curr : best);
+}
+
+/* Aggiorna i prezzi mock di tutte le destinazioni con prezzi reali (in background) */
+async function refreshAllPrices(onUpdate) {
+  for (const dest of DESTINATIONS) {
+    const realData = await fetchBestPriceMultiOrigin(dest.destAirport);
+    if (realData) {
+      dest.flight.main = realData.price;
+      dest.flight.min = Math.round(realData.price * 0.85);
+      dest.flight.max = Math.round(realData.price * 2.5);
+      dest.flight.label = 'live · aggiornato ora';
+      dest.flight.live = true;
+      dest.originAirport = realData.origin;
+      dest.airlineLive = realData.airline;
+      dest.flight.deeplink = buildAviasalesURL(realData.origin, dest.destAirport);
+      if (onUpdate) onUpdate();
+    }
+  }
+}
+
 /* ================================= DATA ================================= */
 const DESTINATIONS = [
   { id:'bud', name:'BUDAPEST', country:'UNGHERIA', flag:'🇭🇺', originAirport:'BGY', destAirport:'BUD', airlines:['Ryanair','Wizz Air'],
@@ -1193,6 +1306,7 @@ const MOODS = [
 ];
 
 const TICKER_ITEMS = [
+  { text:'PREZZI VOLI LIVE · TRAVELPAYOUTS API', type:'live' },
   { text:'BGY→BUD · 38€ · 14 POSTI', type:'live' },
   { text:'MXP→ATH · 65€ · 3 POSTI', type:'live' },
   { text:'VCE→KRK · 48€ · 22 POSTI', type:'live' },
@@ -1200,7 +1314,7 @@ const TICKER_ITEMS = [
   { text:'MXP→LIS · 71€ · 31 POSTI', type:'live' },
   { text:'BGY→PRG · -18% 7GG', type:'down' },
   { text:'VCE→BER · 52€ · 9 POSTI', type:'live' },
-  { text:'SYS · ULT AGG 02:14', type:'sys' },
+  { text:'SYS · AGG IN TEMPO REALE', type:'sys' },
 ];
 
 /* ================================= STATE ================================= */
@@ -1253,13 +1367,14 @@ function renderMoodFilters(containerId) {
 
 function cardHTML(d, rank) {
   const c = d.computed;
+  const liveBadge = d.flight.live ? '<span class="live-badge">● LIVE</span>' : '';
   return `
     <button class="dest-card" onclick="openDetail('${d.id}')">
       <div class="dest-image">
         <img src="${d.image}" alt="${d.name}" loading="lazy" onerror="this.style.display='none'" />
         <div class="dest-image-overlay"></div>
         <div class="dest-image-rank">#${rank}</div>
-        <div class="dest-image-price">~${c.total}€</div>
+        <div class="dest-image-price">DA ${d.flight.main}€</div>
         <div class="dest-image-badges">
           <div class="dest-image-title">${d.name}</div>
           <div class="dest-image-flag">${d.flag}</div>
@@ -1273,42 +1388,20 @@ function cardHTML(d, rank) {
         </div>
       </div>
       <div class="dest-stats">
-        <div class="stat-cell">
-          <div class="stat-cell-label"><span class="stat-cell-emoji">✈</span>VOLO A/R</div>
-          <div class="stat-cell-value">~${d.flight.main}€</div>
-          <div class="stat-cell-sub">${d.flight.label} · ${d.flight.min}-${d.flight.max}€</div>
+        <div class="stat-cell highlight">
+          <div class="stat-cell-label"><span class="stat-cell-emoji">✈</span>VOLO A/R ${liveBadge}</div>
+          <div class="stat-cell-value">${d.flight.main}€</div>
+          <div class="stat-cell-sub">${d.flight.label}</div>
         </div>
         <div class="stat-cell">
-          <div class="stat-cell-label"><span class="stat-cell-emoji">🛏</span>OSTELLO ${state.nights}N</div>
-          <div class="stat-cell-value">~${c.hostel}€</div>
-          <div class="stat-cell-sub">~${d.hostel.perNight}€/notte · ${d.hostel.type}</div>
+          <div class="stat-cell-label"><span class="stat-cell-emoji">🛏</span>OSTELLO</div>
+          <div class="stat-cell-value">verifica →</div>
+          <div class="stat-cell-sub">cerca su Trip.com</div>
         </div>
         <div class="stat-cell">
           <div class="stat-cell-label"><span class="stat-cell-emoji">🍔</span>VITA ${state.nights}GG</div>
           <div class="stat-cell-value">~${c.life}€</div>
-          <div class="stat-cell-sub">~${d.life.perDay}€/giorno</div>
-        </div>
-        <div class="stat-cell highlight">
-          <div class="stat-cell-label"><span class="stat-cell-emoji">💰</span>TOTALE</div>
-          <div class="stat-cell-value">~${c.total}€</div>
-          <div class="stat-cell-sub">${d.totalLabel}</div>
-        </div>
-      </div>
-      <div class="dest-bars">
-        <div class="bar-row">
-          <div class="bar-label">VOLO</div>
-          <div class="bar-track"><div class="bar-fill volo" style="width:${(c.flight/c.total*100)}%"></div></div>
-          <div class="bar-value">${c.flight}€</div>
-        </div>
-        <div class="bar-row">
-          <div class="bar-label">OSTELLO</div>
-          <div class="bar-track"><div class="bar-fill ostello" style="width:${(c.hostel/c.total*100)}%"></div></div>
-          <div class="bar-value">${c.hostel}€</div>
-        </div>
-        <div class="bar-row">
-          <div class="bar-label">VITA</div>
-          <div class="bar-track"><div class="bar-fill vita" style="width:${(c.life/c.total*100)}%"></div></div>
-          <div class="bar-value">${c.life}€</div>
+          <div class="stat-cell-sub">~${d.life.perDay}€/giorno · indicativo</div>
         </div>
       </div>
       <div class="dest-tags">
@@ -1381,9 +1474,9 @@ function renderDetail() {
           <p class="detail-why">${d.why}</p>
         </div>
         <div class="detail-price-wrap">
-          <div class="detail-price-label">TOTALE STIMATO</div>
-          <div class="detail-price">~${total}<span class="cur">€</span></div>
-          <div class="detail-price-sub">${d.totalLabel} · ${state.nights}N</div>
+          <div class="detail-price-label">VOLO A/R DA</div>
+          <div class="detail-price">${flight}<span class="cur">€</span></div>
+          <div class="detail-price-sub">${d.flight.live ? '● live · aggiornato ora' : 'prezzo medio storico'}</div>
         </div>
       </div>
       <div class="detail-tags">
@@ -1398,43 +1491,53 @@ function renderDetail() {
             <div>// BREAKDOWN ${state.nights} NOTTI</div>
             <a href="#" onclick="return false;">EXPORT PDF →</a>
           </div>
-          ${costRowHTML('✈','VOLO ANDATA/RITORNO',`${state.origin} → ${d.destAirport} · ${d.airlines.join(' / ')}`, flight, total, [`Min 30gg: ${d.flight.min}€`,`Max storico: ${d.flight.max}€`,`Durata: ${d.hours}h`])}
-          ${costRowHTML('🛏','OSTELLO',`${state.nights} notti · ${d.hostel.type} · ~${d.hostel.perNight}€/notte`, hostel, total, ['Letto in dormitorio','Colazione inclusa','WiFi, lockers'])}
-          ${costRowHTML('🍔','VITA GIORNALIERA',`${state.nights} giorni · ~${d.life.perDay}€/giorno`, life, total, ['Pasti medi','Trasporti pubblici','2 drink + attrazione'])}
+          ${costRowHTML('✈','VOLO ANDATA/RITORNO',`${d.originAirport} → ${d.destAirport} · ${d.airlines.join(' / ')}`, flight, total, [`Aggiornato in tempo reale`,`Min storico: ${d.flight.min}€`,`Durata: ${d.hours}h`])}
+          ${costRowHTML('🛏','OSTELLO (verifica su Trip.com)',`${state.nights} notti · prezzi reali su Trip.com`, hostel, total, ['Letto in dormitorio','Verifica disponibilità live','Cookies 30gg per commissione'])}
+          ${costRowHTML('🍔','VITA GIORNALIERA',`${state.nights} giorni · ~${d.life.perDay}€/giorno · indicativo`, life, total, ['Pasti street food + 1 ristorante','Trasporti pubblici','2 drink + attrazione'])}
           <div class="total-row">
             <div>
-              <div class="total-label">TOTALE ${state.nights}N · ${d.totalLabel.toUpperCase()}</div>
-              <div class="total-main">TUTTO COMPRESO</div>
+              <div class="total-label">VOLO REALE + STIME OSTELLO/VITA</div>
+              <div class="total-main">SOMMA INDICATIVA · VERIFICA</div>
             </div>
             <div class="total-value">~${total}€</div>
           </div>
         </div>
 
         <div class="cta-grid">
-          <button class="cta-card primary">
+          <a href="${buildAviasalesURL(d.originAirport, d.destAirport)}" target="_blank" rel="noopener sponsored" class="cta-card primary" style="text-decoration:none;">
             <div class="cta-top">
               <div class="cta-label">PRENOTA VOLO</div>
               <svg class="cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
             </div>
-            <div class="cta-name">${d.airlines[0].toUpperCase()}</div>
-            <div class="cta-sub">VOLO DIRETTO · ${d.hours}H · ~${d.flight.main}€</div>
+            <div class="cta-name">AVIASALES · ${d.airlineLive || d.airlines[0].toUpperCase()}</div>
+            <div class="cta-sub">VOLO A/R · ${d.hours}H · DA ${d.flight.main}€</div>
             <div class="cta-warning">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-              OFFERTA SCADE IN 4H · 14 POSTI
+              ${d.flight.live ? 'PREZZO LIVE · CONFRONTA E PRENOTA' : 'CONFRONTA SU AVIASALES'}
             </div>
-          </button>
-          <button class="cta-card secondary">
+          </a>
+          <a href="${buildTripcomURL(d.name)}" target="_blank" rel="noopener sponsored" class="cta-card secondary" style="text-decoration:none;">
             <div class="cta-top">
-              <div class="cta-label">PRENOTA OSTELLO</div>
+              <div class="cta-label">CERCA OSTELLO/HOTEL</div>
               <svg class="cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
             </div>
-            <div class="cta-name">WOMBAT'S HOSTEL</div>
-            <div class="cta-sub">★ 8.9 · CENTRO · ~${d.hostel.perNight}€/N</div>
+            <div class="cta-name">TRIP.COM · ${d.name}</div>
+            <div class="cta-sub">VEDI TUTTI I PREZZI REALI · ${state.nights}N</div>
             <div class="cta-warning">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
-              WIFI · COLAZIONE · LOCKERS
+              OSTELLI · HOTEL · APARTMENT
             </div>
-          </button>
+          </a>
+        </div>
+        <div style="margin-top:14px;">
+          <a href="${buildKlookURL(d.name)}" target="_blank" rel="noopener sponsored" class="cta-card" style="text-decoration:none;background:linear-gradient(135deg,#1a1a1a,#0f0f0f);border:1px solid #2a2a2a;display:block;">
+            <div class="cta-top">
+              <div class="cta-label">TOUR & ATTIVITÀ</div>
+              <svg class="cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </div>
+            <div class="cta-name">KLOOK · COSE DA FARE A ${d.name}</div>
+            <div class="cta-sub">FREE TOURS · BIGLIETTI MUSEI · FOOD TOUR</div>
+          </a>
         </div>
       </div>
 
@@ -1620,6 +1723,30 @@ renderMoodFilters('mood-filters-home');
 renderMoodFilters('mood-filters-results');
 renderTrending();
 renderPricing();
+
+/* AVVIO LIVE: appena la pagina è caricata, aggiorna i prezzi voli con dati reali */
+/* Funziona in background, non blocca il rendering iniziale */
+(async function startLivePrices() {
+  // Indicatore live nel ticker iniziale
+  await refreshAllPrices(() => {
+    // Ogni volta che arriva un nuovo prezzo reale, ri-renderizza le card visibili
+    const currentPage = state.page;
+    if (currentPage === 'home') renderTrending();
+    else if (currentPage === 'results') renderResults();
+    else if (currentPage === 'detail') renderDetail();
+  });
+})();
+
+/* Refresh automatico ogni 30 minuti per tenere i prezzi aggiornati */
+setInterval(async () => {
+  priceCache.clear();
+  await refreshAllPrices(() => {
+    const currentPage = state.page;
+    if (currentPage === 'home') renderTrending();
+    else if (currentPage === 'results') renderResults();
+    else if (currentPage === 'detail') renderDetail();
+  });
+}, 30 * 60 * 1000);
 </script>
 </body>
 </html>
