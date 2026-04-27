@@ -750,6 +750,66 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
   aspect-ratio: 1;
   position: relative;
 }
+
+/* ============ REAL MAP (OpenStreetMap embed) ============ */
+.map-real-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.map-real-iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  filter: invert(0.92) hue-rotate(180deg) saturate(0.7) brightness(0.95);
+}
+.map-real-overlay {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--lime);
+  padding: 10px 14px;
+  pointer-events: none;
+}
+.map-real-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+.map-real-country {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-top: 2px;
+  letter-spacing: 0.1em;
+}
+.map-real-link {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid var(--lime-border);
+  color: var(--lime);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  padding: 6px 10px;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.map-real-link:hover {
+  background: var(--lime);
+  color: #000;
+}
+
 .map-pin {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
@@ -1201,11 +1261,12 @@ const SKAP_MARKER = '522272';
 /* Lista aeroporti italiani principali per ricerca multi-origine */
 const ITALIAN_AIRPORTS = ['BGY','MXP','LIN','FCO','CIA','BLQ','VCE','TRN','NAP','PSA'];
 
-/* Costruisce URL Tiqets per biglietti musei/attrazioni con marker.
-   Usa l'endpoint search che funziona per qualsiasi città (no city ID richiesto).
-   Drive script applicherà automaticamente il marker affiliate al click. */
+/* Costruisce URL Tiqets per biglietti musei/attrazioni.
+   Usa il link affiliate ufficiale Travelpayouts (zfta0wIT) che porta su Tiqets
+   con il marker SKAP-vert già applicato. L'utente cerca poi la sua città. */
 function buildTiqetsURL(cityName) {
-  return `https://www.tiqets.com/it/cerca/?q=${encodeURIComponent(cityName)}`;
+  // Link affiliate ufficiale Travelpayouts per Tiqets - marker già incluso nel codice
+  return 'https://tiqets.tp.st/zfta0wIT';
 }
 
 /* Costruisce URL Aviasales con date e marker affiliate.
@@ -1426,6 +1487,7 @@ async function refreshAllPrices(onUpdate) {
 /* ================================= DATA ================================= */
 const DESTINATIONS = [
   { id:'bud', name:'BUDAPEST', country:'UNGHERIA', flag:'🇭🇺', originAirport:'BGY', destAirport:'BUD', airlines:['Ryanair','Wizz Air'],
+    lat:47.4979, lng:19.0402,
     image:'https://images.unsplash.com/photo-1541849546-216549ae216d?w=800&q=80',
     flight:{main:38, min:30, max:90, label:'early book.'}, hostel:{perNight:14, type:'dorm 8p'}, life:{perDay:22},
     totalLabel:'scenario ottimale', hours:1.8, weather:18, currency:'HUF',
@@ -1433,6 +1495,7 @@ const DESTINATIONS = [
     tags:[{label:'TERME ROMANE',type:'iconic'},{label:'RUIN BARS',type:'iconic'},{label:'BIRRA 2€',type:'positive'},{label:'METRO OK',type:'positive'}],
     moods:['party','culture','budget'] },
   { id:'buc', name:'BUCAREST', country:'ROMANIA', flag:'🇷🇴', originAirport:'BGY', destAirport:'OTP', airlines:['Ryanair','Wizz Air','Blue Air'],
+    lat:44.4268, lng:26.1025,
     image:'https://images.unsplash.com/photo-1584646098378-0874589d76b1?w=800&q=80',
     flight:{main:52, min:42, max:110, label:'medio'}, hostel:{perNight:11, type:'dorm 6p'}, life:{perDay:18},
     totalLabel:'scenario ottimale', hours:2.3, weather:15, currency:'RON',
@@ -1440,13 +1503,15 @@ const DESTINATIONS = [
     tags:[{label:'PARLAMENTO #2 MONDO',type:'iconic'},{label:'NIGHTLIFE INTENSA',type:'positive'},{label:'ECONOMICA',type:'positive'},{label:'TAXI ABUSIVI',type:'warning'}],
     moods:['party','culture','budget'] },
   { id:'kra', name:'CRACOVIA', country:'POLONIA', flag:'🇵🇱', originAirport:'BGY', destAirport:'KRK', airlines:['Ryanair'],
-    image:'https://images.unsplash.com/photo-1607837401033-a9baef69a2b4?w=800&q=80',
+    lat:50.0647, lng:19.9450,
+    image:'https://images.unsplash.com/photo-1606988531180-7f2dba34ec64?w=800&q=80',
     flight:{main:48, min:38, max:95, label:'medio'}, hostel:{perNight:12, type:'dorm 6p'}, life:{perDay:24},
     totalLabel:'scenario ottimale', hours:2.0, weather:12, currency:'PLN',
     why:'Piazza medievale più grande d\'Europa. Auschwitz a 1h. Vodka a fiumi.',
     tags:[{label:'AUSCHWITZ 1H',type:'iconic'},{label:'MINIERA SALE',type:'iconic'},{label:'VODKA ECONOMICA',type:'positive'},{label:'FREDDO SERIO',type:'warning'}],
     moods:['culture','budget'] },
   { id:'prg', name:'PRAGA', country:'REP. CECA', flag:'🇨🇿', originAirport:'BGY', destAirport:'PRG', airlines:['Ryanair','Smartwings'],
+    lat:50.0755, lng:14.4378,
     image:'https://images.unsplash.com/photo-1519677100203-a0e668c92439?w=800&q=80',
     flight:{main:55, min:42, max:120, label:'picco'}, hostel:{perNight:17, type:'dorm 6p'}, life:{perDay:28},
     totalLabel:'scenario realistico', hours:1.6, weather:14, currency:'CZK',
@@ -1454,6 +1519,7 @@ const DESTINATIONS = [
     tags:[{label:'CASTELLO UNESCO',type:'iconic'},{label:'BIRRA < ACQUA',type:'positive'},{label:'TROPPI TURISTI',type:'warning'},{label:'FREGATURE CAMBIO',type:'danger'}],
     moods:['culture','party'] },
   { id:'ath', name:'ATENE', country:'GRECIA', flag:'🇬🇷', originAirport:'BGY', destAirport:'ATH', airlines:['Ryanair','Aegean'],
+    lat:37.9838, lng:23.7275,
     image:'https://images.unsplash.com/photo-1555993539-1732b0258235?w=800&q=80',
     flight:{main:65, min:50, max:140, label:'medio'}, hostel:{perNight:17, type:'dorm 6p'}, life:{perDay:24},
     totalLabel:'scenario realistico', hours:2.8, weather:22, currency:'EUR',
@@ -1461,6 +1527,7 @@ const DESTINATIONS = [
     tags:[{label:'ACROPOLI',type:'iconic'},{label:'SPIAGGIA 30MIN',type:'positive'},{label:'SOUVLAKI 3€',type:'positive'},{label:'METRO CHIUDE 00:30',type:'warning'}],
     moods:['sea','culture'] },
   { id:'mar', name:'MARRAKECH', country:'MAROCCO', flag:'🇲🇦', originAirport:'BGY', destAirport:'RAK', airlines:['Ryanair'],
+    lat:31.6295, lng:-7.9811,
     image:'https://images.unsplash.com/photo-1597212720291-936a7efd2139?w=800&q=80',
     flight:{main:89, min:75, max:180, label:'medio'}, hostel:{perNight:14, type:'riad dorm'}, life:{perDay:22},
     totalLabel:'scenario realistico', hours:3.4, weather:26, currency:'MAD',
@@ -1468,6 +1535,7 @@ const DESTINATIONS = [
     tags:[{label:'ESPERIENZA UNICA',type:'iconic'},{label:'SAHARA TOUR',type:'iconic'},{label:'CONTRATTARE SEMPRE',type:'warning'},{label:'DONNE SOLE CAUTE',type:'danger'}],
     moods:['culture'] },
   { id:'val', name:'VALENCIA', country:'SPAGNA', flag:'🇪🇸', originAirport:'BGY', destAirport:'VLC', airlines:['Ryanair','Vueling'],
+    lat:39.4699, lng:-0.3763,
     image:'https://images.unsplash.com/photo-1599082304032-31f18039e80a?w=800&q=80',
     flight:{main:62, min:50, max:130, label:'medio'}, hostel:{perNight:21, type:'dorm 6p'}, life:{perDay:28},
     totalLabel:'scenario realistico', hours:2.1, weather:21, currency:'EUR',
@@ -1475,6 +1543,7 @@ const DESTINATIONS = [
     tags:[{label:'PAELLA ORIGINALE',type:'iconic'},{label:'SPIAGGIA URBANA',type:'positive'},{label:'MENO TURISTI',type:'positive'}],
     moods:['sea','culture'] },
   { id:'por', name:'PORTO', country:'PORTOGALLO', flag:'🇵🇹', originAirport:'BGY', destAirport:'OPO', airlines:['Ryanair','TAP'],
+    lat:41.1579, lng:-8.6291,
     image:'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=800&q=80',
     flight:{main:58, min:48, max:140, label:'medio'}, hostel:{perNight:23, type:'dorm 4p'}, life:{perDay:30},
     totalLabel:'scenario realistico', hours:2.9, weather:19, currency:'EUR',
@@ -1482,6 +1551,7 @@ const DESTINATIONS = [
     tags:[{label:'PORT WINE TOUR',type:'iconic'},{label:'LIBRERIA LELLO',type:'iconic'},{label:'FRANCESINHA',type:'positive'},{label:'SALITE RIPIDE',type:'warning'}],
     moods:['culture','sea'] },
   { id:'ber', name:'BERLINO', country:'GERMANIA', flag:'🇩🇪', originAirport:'BGY', destAirport:'BER', airlines:['Ryanair','easyJet'],
+    lat:52.5200, lng:13.4050,
     image:'https://images.unsplash.com/photo-1587330979470-3016b6702d89?w=800&q=80',
     flight:{main:45, min:35, max:120, label:'early book.'}, hostel:{perNight:29, type:'dorm 6p'}, life:{perDay:31},
     totalLabel:'scenario realistico', hours:1.7, weather:13, currency:'EUR',
@@ -1489,6 +1559,7 @@ const DESTINATIONS = [
     tags:[{label:'BERGHAIN',type:'iconic'},{label:'STREET ART MONDIALE',type:'iconic'},{label:'CLUB NON-STOP',type:'positive'},{label:'OSTELLI CARI',type:'warning'}],
     moods:['party','culture'] },
   { id:'bar', name:'BARCELLONA', country:'SPAGNA', flag:'🇪🇸', originAirport:'BGY', destAirport:'BCN', airlines:['Ryanair','Vueling'],
+    lat:41.3851, lng:2.1734,
     image:'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80',
     flight:{main:95, min:80, max:130, label:'last min.'}, hostel:{perNight:22, type:'dorm 6p'}, life:{perDay:35},
     totalLabel:'scenario ottimale', hours:1.9, weather:20, currency:'EUR',
@@ -1742,7 +1813,7 @@ function renderDetail() {
               <div class="cta-label">BIGLIETTI MUSEI & ATTRAZIONI</div>
               <svg class="cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
             </div>
-            <div class="cta-name">TIQETS · ${d.name}</div>
+            <div class="cta-name">TIQETS · CERCA ${d.name}</div>
             <div class="cta-sub">SALTA LA FILA · MUSEI · MONUMENTI · ATTRAZIONI</div>
           </a>
         </div>
@@ -1750,28 +1821,26 @@ function renderDetail() {
 
       <aside class="sidebar">
         <div class="side-card">
-          <div class="map-box grid-bg">
-            <div class="map-pin">
-              <div>
-                <div class="map-pin-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 10c0 7-8 13-8 13s-8-6-8-13a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                </div>
-                <div class="map-name">${d.name}</div>
-                <div class="map-country">${d.country}</div>
-              </div>
+          <div class="map-real-wrap">
+            <iframe
+              class="map-real-iframe"
+              src="https://www.openstreetmap.org/export/embed.html?bbox=${d.lng-0.04}%2C${d.lat-0.025}%2C${d.lng+0.04}%2C${d.lat+0.025}&amp;layer=mapnik&amp;marker=${d.lat}%2C${d.lng}"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              title="Mappa di ${d.name}"
+            ></iframe>
+            <div class="map-real-overlay">
+              <div class="map-real-name">${d.name}</div>
+              <div class="map-real-country">${d.country} · ${d.lat.toFixed(2)}°N ${d.lng.toFixed(2)}°E</div>
             </div>
-            <div class="map-toggles">
-              <span class="map-toggle">SAT</span>
-              <span class="map-toggle active">MAP</span>
-            </div>
-            <div class="map-tag">// MAP</div>
+            <a class="map-real-link" href="https://www.openstreetmap.org/?mlat=${d.lat}&amp;mlon=${d.lng}#map=13/${d.lat}/${d.lng}" target="_blank" rel="noopener">VEDI MAPPA INTERA →</a>
           </div>
         </div>
 
         <div class="side-card">
           <div class="side-head">// QUICK FACTS</div>
           <div class="facts-list">
-            ${factRow('🌡','Meteo oggi',`${d.weather}°C`)}
+            ${factRow('🌡','Meteo oggi',`<span id="weather-temp-${d.id}">${d.weather}°C</span>`)}
             ${factRow('💰','Valuta', d.currency)}
             ${factRow('🕐','Fuso', d.currency === 'EUR' ? 'Stessa ora' : '+1h')}
             ${factRow('✈','Scalo','Diretto')}
@@ -1912,9 +1981,64 @@ function setMood(m) {
   if (state.view === 'results') renderResults();
 }
 
+/* Cache locale meteo (30 minuti) per non spammare Open-Meteo API */
+const weatherCache = new Map();
+
+/* Mappa codice meteo Open-Meteo → emoji + descrizione italiana */
+function weatherCodeToInfo(code) {
+  if (code === 0) return { emoji: '☀️', desc: 'sereno' };
+  if (code <= 3) return { emoji: '⛅', desc: 'parzialmente nuvoloso' };
+  if (code <= 49) return { emoji: '🌫️', desc: 'nebbia' };
+  if (code <= 67) return { emoji: '🌧️', desc: 'pioggia' };
+  if (code <= 77) return { emoji: '❄️', desc: 'neve' };
+  if (code <= 82) return { emoji: '🌦️', desc: 'rovesci' };
+  if (code <= 99) return { emoji: '⛈️', desc: 'temporale' };
+  return { emoji: '🌡️', desc: '' };
+}
+
+/* Chiama Open-Meteo API (gratis, no API key) per meteo real-time */
+async function fetchWeather(destinationId, lat, lng) {
+  const cacheKey = `${lat},${lng}`;
+  const cached = weatherCache.get(cacheKey);
+  if (cached && (Date.now() - cached.ts < 30 * 60 * 1000)) {
+    return cached.data;
+  }
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,weather_code&timezone=auto`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.current) return null;
+    const result = {
+      temp: Math.round(data.current.temperature_2m),
+      code: data.current.weather_code,
+    };
+    weatherCache.set(cacheKey, { data: result, ts: Date.now() });
+    return result;
+  } catch (e) {
+    return null;
+  }
+}
+
+/* Aggiorna il display meteo nella pagina dettaglio */
+async function updateLiveWeather(destination) {
+  if (!destination.lat || !destination.lng) return;
+  const weatherEl = document.getElementById(`weather-temp-${destination.id}`);
+  if (!weatherEl) return;
+  const data = await fetchWeather(destination.id, destination.lat, destination.lng);
+  if (!data) return;
+  const info = weatherCodeToInfo(data.code);
+  weatherEl.innerHTML = `${info.emoji} ${data.temp}°C <span style="color:var(--text-dim);font-size:9px;letter-spacing:0.1em;">· ${info.desc.toUpperCase()}</span>`;
+}
+
 function openDetail(id) {
   state.selectedId = id;
   goTo('detail');
+  // Carica meteo real-time per la destinazione (in background)
+  const dest = DESTINATIONS.find(x => x.id === id);
+  if (dest) {
+    setTimeout(() => updateLiveWeather(dest), 100);
+  }
 }
 
 /* ================================= INIT ================================= */
