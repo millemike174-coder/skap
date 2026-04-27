@@ -1202,12 +1202,10 @@ const SKAP_MARKER = '522272';
 const ITALIAN_AIRPORTS = ['BGY','MXP','LIN','FCO','CIA','BLQ','VCE','TRN','NAP','PSA'];
 
 /* Costruisce URL Tiqets per biglietti musei/attrazioni con marker.
+   Usa l'endpoint search che funziona per qualsiasi città (no city ID richiesto).
    Drive script applicherà automaticamente il marker affiliate al click. */
 function buildTiqetsURL(cityName) {
-  const slug = cityName.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // rimuove accenti
-    .replace(/\s+/g, '-');
-  return `https://www.tiqets.com/it/${slug}-attrazioni/`;
+  return `https://www.tiqets.com/it/cerca/?q=${encodeURIComponent(cityName)}`;
 }
 
 /* Costruisce URL Aviasales con date e marker affiliate.
