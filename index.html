@@ -150,7 +150,8 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
 .search-grid {
   display: grid; grid-template-columns: 1fr; 
 }
-@media (min-width: 640px) { .search-grid { grid-template-columns: 1fr 1fr 1fr; } }
+@media (min-width: 640px) { .search-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1024px) { .search-grid { grid-template-columns: 1fr 1fr 1fr 1fr; } }
 .search-field {
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-soft);
@@ -175,6 +176,56 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
   appearance: none; -webkit-appearance: none;
 }
 @media (min-width: 640px) { .field-value-select { font-size: 36px; } }
+
+/* ============ DATE PICKER ============ */
+.date-picker-wrap { display: flex; flex-direction: column; gap: 8px; }
+.date-input-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.date-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--text-dimmer); letter-spacing: 0.15em;
+  flex-shrink: 0;
+}
+.date-input {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px; color: var(--lime);
+  background: transparent; border: none; outline: none;
+  cursor: pointer;
+  text-align: right;
+  flex: 1;
+  letter-spacing: 0.04em;
+  padding: 4px 0;
+  color-scheme: dark;
+}
+@media (min-width: 640px) { .date-input { font-size: 22px; } }
+.date-input:focus { color: var(--lime-bright, #d8ff4c); }
+.date-input::-webkit-calendar-picker-indicator {
+  filter: invert(85%) sepia(35%) saturate(700%) hue-rotate(20deg);
+  cursor: pointer;
+  opacity: 0.7;
+  margin-left: 4px;
+}
+.date-input::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+.date-presets {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-soft);
+}
+.preset-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.1em;
+  padding: 4px 8px;
+  background: rgba(200, 240, 60, 0.05);
+  border: 1px solid rgba(200, 240, 60, 0.2);
+  color: var(--lime);
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s;
+}
+.preset-btn:hover {
+  background: rgba(200, 240, 60, 0.15);
+  border-color: rgba(200, 240, 60, 0.4);
+}
 .nights-control { display: flex; align-items: center; gap: 14px; }
 .nights-btn {
   width: 32px; height: 32px;
@@ -959,6 +1010,28 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
         </div>
         <div class="search-field">
           <div class="field-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            DATE
+          </div>
+          <div class="date-picker-wrap">
+            <div class="date-input-row">
+              <label class="date-label">PARTENZA</label>
+              <input type="date" id="depart-date" class="date-input" onchange="onDateChange()" />
+            </div>
+            <div class="date-input-row">
+              <label class="date-label">RITORNO</label>
+              <input type="date" id="return-date" class="date-input" onchange="onDateChange()" />
+            </div>
+            <div class="date-presets">
+              <button class="preset-btn" onclick="setPreset('weekend-classic')">VEN-DOM</button>
+              <button class="preset-btn" onclick="setPreset('weekend-long')">GIO-LUN</button>
+              <button class="preset-btn" onclick="setPreset('weekend-short')">SAB-DOM</button>
+              <button class="preset-btn" onclick="setPreset('week-plus')">+1 SETT</button>
+            </div>
+          </div>
+        </div>
+        <div class="search-field">
+          <div class="field-label">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM16 12h.01"/></svg>
             <span>BUDGET · <span id="budget-value">180</span>€</span>
           </div>
@@ -1128,27 +1201,163 @@ const SKAP_MARKER = '522272';
 /* Lista aeroporti italiani principali per ricerca multi-origine */
 const ITALIAN_AIRPORTS = ['BGY','MXP','LIN','FCO','CIA','BLQ','VCE','TRN','NAP','PSA'];
 
-/* Costruisce URL Trip.com con marker affiliate (deeplink legale) */
-function buildTripcomURL(cityName) {
-  const params = new URLSearchParams({
-    city: cityName,
-    marker: SKAP_MARKER,
-  });
-  return `https://trip.tp.st/hotels?${params.toString()}`;
+/* Costruisce URL Tiqets per biglietti musei/attrazioni con marker.
+   Drive script applicherà automaticamente il marker affiliate al click. */
+function buildTiqetsURL(cityName) {
+  const slug = cityName.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // rimuove accenti
+    .replace(/\s+/g, '-');
+  return `https://www.tiqets.com/it/${slug}-attrazioni/`;
 }
 
-/* Costruisce URL Aviasales con marker (volo affiliate) */
-function buildAviasalesURL(originCode, destCode) {
-  return `https://www.aviasales.com/search/${originCode}30${destCode}1?marker=${SKAP_MARKER}`;
+/* Costruisce URL Aviasales con date e marker affiliate.
+   Formato Aviasales: BGY[GG][MM]BUD[GG][MM]1
+   Esempio: BGY3004BUD02051 = Bergamo→Budapest 30/04, ritorno 02/05, 1 passeggero */
+function buildAviasalesURL(originCode, destCode, departDate, returnDate) {
+  // Se date non passate, usa quelle attualmente selezionate
+  const dates = (departDate && returnDate)
+    ? { depart: departDate, return: returnDate }
+    : getCurrentDates();
+  const dd1 = String(dates.depart.getDate()).padStart(2, '0');
+  const mm1 = String(dates.depart.getMonth() + 1).padStart(2, '0');
+  const dd2 = String(dates.return.getDate()).padStart(2, '0');
+  const mm2 = String(dates.return.getMonth() + 1).padStart(2, '0');
+  const route = `${originCode}${dd1}${mm1}${destCode}${dd2}${mm2}1`;
+  return `https://www.aviasales.com/search/${route}?marker=${SKAP_MARKER}`;
 }
 
-/* Costruisce URL Klook tour con marker */
+/* Legge le date attualmente selezionate dagli input data */
+function getCurrentDates() {
+  const departInput = document.getElementById('depart-date');
+  const returnInput = document.getElementById('return-date');
+  if (departInput && departInput.value && returnInput && returnInput.value) {
+    return {
+      depart: new Date(departInput.value),
+      return: new Date(returnInput.value),
+    };
+  }
+  // Fallback: prossimo weekend
+  return getDefaultWeekend();
+}
+
+/* Calcola il prossimo weekend (venerdì + domenica) come default */
+function getDefaultWeekend() {
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0=domenica, 5=venerdì
+  let daysUntilFriday = (5 - dayOfWeek + 7) % 7;
+  if (daysUntilFriday === 0) daysUntilFriday = 7;
+  const friday = new Date(today);
+  friday.setDate(today.getDate() + daysUntilFriday);
+  const sunday = new Date(friday);
+  sunday.setDate(friday.getDate() + 2);
+  return { depart: friday, return: sunday };
+}
+
+/* Calcola un giorno specifico della settimana, della prossima settimana */
+function getNextDayOfWeek(targetDayOfWeek) {
+  // targetDayOfWeek: 0=dom, 1=lun, 2=mar, ..., 5=ven, 6=sab
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  let daysUntil = (targetDayOfWeek - dayOfWeek + 7) % 7;
+  if (daysUntil === 0) daysUntil = 7;
+  const target = new Date(today);
+  target.setDate(today.getDate() + daysUntil);
+  return target;
+}
+
+/* Imposta date in base a preset rapido */
+function setPreset(preset) {
+  let depart, ret;
+  if (preset === 'weekend-classic') {
+    // Venerdì → Domenica
+    depart = getNextDayOfWeek(5);
+    ret = new Date(depart);
+    ret.setDate(depart.getDate() + 2);
+  } else if (preset === 'weekend-long') {
+    // Giovedì → Lunedì
+    depart = getNextDayOfWeek(4);
+    ret = new Date(depart);
+    ret.setDate(depart.getDate() + 4);
+  } else if (preset === 'weekend-short') {
+    // Sabato → Domenica
+    depart = getNextDayOfWeek(6);
+    ret = new Date(depart);
+    ret.setDate(depart.getDate() + 1);
+  } else if (preset === 'week-plus') {
+    // Sposta le date attuali avanti di 7 giorni
+    const current = getCurrentDates();
+    depart = new Date(current.depart);
+    depart.setDate(depart.getDate() + 7);
+    ret = new Date(current.return);
+    ret.setDate(ret.getDate() + 7);
+  }
+  setDateInputs(depart, ret);
+  onDateChange();
+}
+
+/* Imposta i valori degli input date in formato YYYY-MM-DD */
+function setDateInputs(depart, ret) {
+  const fmt = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+  const departInput = document.getElementById('depart-date');
+  const returnInput = document.getElementById('return-date');
+  if (departInput) departInput.value = fmt(depart);
+  if (returnInput) returnInput.value = fmt(ret);
+  // Aggiorna lo stato delle notti (differenza in giorni tra le date)
+  const diffTime = ret.getTime() - depart.getTime();
+  const diffDays = Math.max(1, Math.round(diffTime / (1000 * 60 * 60 * 24)));
+  state.nights = diffDays;
+  const nightsValueEl = document.getElementById('nights-value');
+  if (nightsValueEl) nightsValueEl.textContent = diffDays;
+}
+
+/* Chiamata quando l'utente cambia una data manualmente.
+   Aggiorna lo state e re-renderizza le card per aggiornare i link Aviasales. */
+function onDateChange() {
+  const departInput = document.getElementById('depart-date');
+  const returnInput = document.getElementById('return-date');
+  if (!departInput || !returnInput) return;
+  if (!departInput.value || !returnInput.value) return;
+  // Validazione: ritorno dopo partenza
+  const depart = new Date(departInput.value);
+  const ret = new Date(returnInput.value);
+  if (ret <= depart) {
+    // Se il ritorno è prima/uguale partenza, sposta avanti di 2 giorni
+    const newRet = new Date(depart);
+    newRet.setDate(depart.getDate() + 2);
+    const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    returnInput.value = fmt(newRet);
+  }
+  // Aggiorna numero notti
+  const diffTime = new Date(returnInput.value).getTime() - new Date(departInput.value).getTime();
+  const diffDays = Math.max(1, Math.round(diffTime / (1000 * 60 * 60 * 24)));
+  state.nights = diffDays;
+  const nightsValueEl = document.getElementById('nights-value');
+  if (nightsValueEl) nightsValueEl.textContent = diffDays;
+  // Re-render
+  const currentPage = state.page;
+  if (currentPage === 'home') renderTrending();
+  else if (currentPage === 'results') renderResults();
+  else if (currentPage === 'detail') renderDetail();
+}
+
+/* Inizializza i date picker con il prossimo weekend al primo caricamento */
+function initDatePickers() {
+  const w = getDefaultWeekend();
+  setDateInputs(w.depart, w.return);
+}
+
+/* Costruisce URL Klook per tour & attività con marker.
+   Drive script applicherà automaticamente il marker affiliate al click. */
 function buildKlookURL(cityName) {
-  const params = new URLSearchParams({
-    keyword: cityName,
-    marker: SKAP_MARKER,
-  });
-  return `https://klook.tp.st/?${params.toString()}`;
+  const slug = cityName.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, '-');
+  return `https://www.klook.com/it/search/?keyword=${encodeURIComponent(cityName)}`;
 }
 
 /* Cache locale prezzi (sopravvive solo per la sessione corrente) */
@@ -1325,6 +1534,7 @@ const state = {
   budget: 180,
   mood: 'all',
   selectedId: null,
+  weekendOffset: 0,
 };
 
 /* ================================= HELPERS ================================= */
@@ -1394,9 +1604,9 @@ function cardHTML(d, rank) {
           <div class="stat-cell-sub">${d.flight.label}</div>
         </div>
         <div class="stat-cell">
-          <div class="stat-cell-label"><span class="stat-cell-emoji">🛏</span>OSTELLO</div>
-          <div class="stat-cell-value">verifica →</div>
-          <div class="stat-cell-sub">cerca su Trip.com</div>
+          <div class="stat-cell-label"><span class="stat-cell-emoji">🎟</span>TOUR & MUSEI</div>
+          <div class="stat-cell-value">scopri →</div>
+          <div class="stat-cell-sub">Klook + Tiqets</div>
         </div>
         <div class="stat-cell">
           <div class="stat-cell-label"><span class="stat-cell-emoji">🍔</span>VITA ${state.nights}GG</div>
@@ -1491,15 +1701,14 @@ function renderDetail() {
             <div>// BREAKDOWN ${state.nights} NOTTI</div>
             <a href="#" onclick="return false;">EXPORT PDF →</a>
           </div>
-          ${costRowHTML('✈','VOLO ANDATA/RITORNO',`${d.originAirport} → ${d.destAirport} · ${d.airlines.join(' / ')}`, flight, total, [`Aggiornato in tempo reale`,`Min storico: ${d.flight.min}€`,`Durata: ${d.hours}h`])}
-          ${costRowHTML('🛏','OSTELLO (verifica su Trip.com)',`${state.nights} notti · prezzi reali su Trip.com`, hostel, total, ['Letto in dormitorio','Verifica disponibilità live','Cookies 30gg per commissione'])}
-          ${costRowHTML('🍔','VITA GIORNALIERA',`${state.nights} giorni · ~${d.life.perDay}€/giorno · indicativo`, life, total, ['Pasti street food + 1 ristorante','Trasporti pubblici','2 drink + attrazione'])}
+          ${costRowHTML('✈','VOLO ANDATA/RITORNO',`${d.originAirport} → ${d.destAirport} · ${d.airlines.join(' / ')}`, flight, flight + life, [`Aggiornato in tempo reale`,`Min storico: ${d.flight.min}€`,`Durata: ${d.hours}h`])}
+          ${costRowHTML('🍔','VITA GIORNALIERA',`${state.nights} giorni · ~${d.life.perDay}€/giorno · indicativo`, life, flight + life, ['Pasti street food + 1 ristorante','Trasporti pubblici','2 drink + attrazione'])}
           <div class="total-row">
             <div>
-              <div class="total-label">VOLO REALE + STIME OSTELLO/VITA</div>
-              <div class="total-main">SOMMA INDICATIVA · VERIFICA</div>
+              <div class="total-label">VOLO + VITA · ALLOGGIO ESCLUSO</div>
+              <div class="total-main">CALCOLO STIMATO · VERIFICA</div>
             </div>
-            <div class="total-value">~${total}€</div>
+            <div class="total-value">~${flight + life}€</div>
           </div>
         </div>
 
@@ -1516,27 +1725,27 @@ function renderDetail() {
               ${d.flight.live ? 'PREZZO LIVE · CONFRONTA E PRENOTA' : 'CONFRONTA SU AVIASALES'}
             </div>
           </a>
-          <a href="${buildTripcomURL(d.name)}" target="_blank" rel="noopener sponsored" class="cta-card secondary" style="text-decoration:none;">
-            <div class="cta-top">
-              <div class="cta-label">CERCA OSTELLO/HOTEL</div>
-              <svg class="cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-            </div>
-            <div class="cta-name">TRIP.COM · ${d.name}</div>
-            <div class="cta-sub">VEDI TUTTI I PREZZI REALI · ${state.nights}N</div>
-            <div class="cta-warning">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
-              OSTELLI · HOTEL · APARTMENT
-            </div>
-          </a>
-        </div>
-        <div style="margin-top:14px;">
-          <a href="${buildKlookURL(d.name)}" target="_blank" rel="noopener sponsored" class="cta-card" style="text-decoration:none;background:linear-gradient(135deg,#1a1a1a,#0f0f0f);border:1px solid #2a2a2a;display:block;">
+          <a href="${buildKlookURL(d.name)}" target="_blank" rel="noopener sponsored" class="cta-card secondary" style="text-decoration:none;">
             <div class="cta-top">
               <div class="cta-label">TOUR & ATTIVITÀ</div>
               <svg class="cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
             </div>
-            <div class="cta-name">KLOOK · COSE DA FARE A ${d.name}</div>
-            <div class="cta-sub">FREE TOURS · BIGLIETTI MUSEI · FOOD TOUR</div>
+            <div class="cta-name">KLOOK · ${d.name}</div>
+            <div class="cta-sub">FREE TOURS · FOOD TOUR · ESPERIENZE</div>
+            <div class="cta-warning">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              ATTIVITÀ E TOUR LOCALI
+            </div>
+          </a>
+        </div>
+        <div style="margin-top:14px;">
+          <a href="${buildTiqetsURL(d.name)}" target="_blank" rel="noopener sponsored" class="cta-card" style="text-decoration:none;background:linear-gradient(135deg,#1a1a1a,#0f0f0f);border:1px solid #2a2a2a;display:block;">
+            <div class="cta-top">
+              <div class="cta-label">BIGLIETTI MUSEI & ATTRAZIONI</div>
+              <svg class="cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </div>
+            <div class="cta-name">TIQETS · ${d.name}</div>
+            <div class="cta-sub">SALTA LA FILA · MUSEI · MONUMENTI · ATTRAZIONI</div>
           </a>
         </div>
       </div>
@@ -1723,6 +1932,9 @@ renderMoodFilters('mood-filters-home');
 renderMoodFilters('mood-filters-results');
 renderTrending();
 renderPricing();
+
+/* Inizializza i date picker con il prossimo weekend al primo caricamento */
+initDatePickers();
 
 /* AVVIO LIVE: appena la pagina è caricata, aggiorna i prezzi voli con dati reali */
 /* Funziona in background, non blocca il rendering iniziale */
