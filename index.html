@@ -4,9 +4,9 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>SKAP · Weekend Engine</title>
-<meta name="description" content="Dove vai questo weekend? Volo + ostello + vita giornaliera, un solo numero. Comparatore voli low-cost per under 30." />
+<meta name="description" content="Dove vai questo weekend? Voli low-cost + tour + biglietti musei. Tutto in un posto. Comparatore per under 30." />
 <meta property="og:title" content="SKAP · Weekend Engine" />
-<meta property="og:description" content="Dove vai questo weekend? Volo + ostello + vita. Un solo numero." />
+<meta property="og:description" content="Dove vai questo weekend? Voli low-cost + tour + biglietti musei. Tutto in un posto." />
 <meta property="og:type" content="website" />
 <meta name="theme-color" content="#0a0a0a" />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%230a0a0a%22/><text x=%2250%22 y=%2272%22 font-family=%22Arial Black%22 font-size=%2270%22 font-weight=%22900%22 text-anchor=%22middle%22 fill=%22%23c8f03c%22>S</text></svg>" />
@@ -903,7 +903,7 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
   margin-top: 40px;
 }
 @media (min-width: 640px) { .pricing-grid { grid-template-columns: 1fr 1fr; } }
-@media (min-width: 1024px) { .pricing-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 1024px) { .pricing-grid { grid-template-columns: repeat(3, 1fr); max-width: 1100px; margin-left: auto; margin-right: auto; } }
 
 .plan-card {
   position: relative;
@@ -951,6 +951,111 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
   background: var(--bg); color: var(--text); border-color: var(--bg);
 }
 .plan-card.highlight .plan-cta:hover { background: #18181b; color: var(--text); border-color: #18181b; }
+
+/* Current FREE plan badge & disabled CTA */
+.plan-card.current-plan { border-color: rgba(200, 240, 60, 0.4); }
+.plan-badge.current-badge { background: rgba(200, 240, 60, 0.15); color: var(--lime); border: 1px solid rgba(200, 240, 60, 0.3); }
+.plan-cta.cta-current {
+  background: rgba(200, 240, 60, 0.08);
+  color: var(--lime);
+  border-color: rgba(200, 240, 60, 0.3);
+  cursor: default;
+}
+.plan-cta.cta-current:hover { border-color: rgba(200, 240, 60, 0.3); color: var(--lime); }
+
+/* ============ WAITLIST MODAL ============ */
+.waitlist-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: none;
+  align-items: center; justify-content: center;
+  padding: 20px;
+}
+.waitlist-overlay.open { display: flex; animation: fadeIn 0.2s ease-out; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.waitlist-card {
+  position: relative;
+  background: #0a0a0a;
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--lime);
+  max-width: 480px;
+  width: 100%;
+  padding: 32px 28px 24px;
+  border-radius: 4px;
+  animation: slideUp 0.3s ease-out;
+  max-height: 90vh; overflow-y: auto;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.waitlist-close {
+  position: absolute; top: 12px; right: 12px;
+  width: 32px; height: 32px;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-dim); font-size: 18px; line-height: 1;
+  cursor: pointer; border-radius: 4px;
+  transition: all 0.15s;
+}
+.waitlist-close:hover { color: var(--lime); border-color: var(--lime); }
+.waitlist-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.2em;
+  color: var(--text-dim); margin-bottom: 12px;
+}
+.waitlist-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 42px; line-height: 1; letter-spacing: 0.02em;
+  margin-bottom: 14px;
+}
+@media (min-width: 640px) { .waitlist-title { font-size: 56px; } }
+.waitlist-sub {
+  font-size: 14px; color: var(--text-muted); line-height: 1.6;
+  margin-bottom: 20px;
+}
+.waitlist-sub strong { color: var(--lime); font-weight: 600; }
+.waitlist-perks {
+  list-style: none; padding: 0; margin: 0 0 24px 0;
+}
+.waitlist-perks li {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; letter-spacing: 0.05em;
+  color: var(--text-muted);
+  padding: 6px 0;
+  display: flex; gap: 10px;
+}
+.waitlist-perks .lime { color: var(--lime); flex-shrink: 0; }
+.waitlist-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: #18181b;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; color: var(--text);
+  margin-bottom: 12px;
+  transition: border-color 0.15s;
+}
+.waitlist-input:focus { outline: none; border-color: var(--lime); }
+.waitlist-input::placeholder { color: var(--text-dimmer); }
+.waitlist-submit {
+  width: 100%;
+  padding: 14px;
+  background: var(--lime); color: #000;
+  border: none; border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.15em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.waitlist-submit:hover { background: #d8ff4c; transform: translateY(-1px); }
+.waitlist-fineprint {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--text-dimmer);
+  letter-spacing: 0.05em; line-height: 1.5;
+  margin-top: 14px;
+  text-align: center;
+}
 
 .trust-grid {
   display: grid; grid-template-columns: 1fr; gap: 16px;
@@ -1035,7 +1140,7 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
         <span class="lime">WEEKEND?</span>
       </h1>
       <p class="hero-sub fade-up" style="animation-delay: 0.2s; opacity: 0;">
-        Volo + ostello + vita giornaliera, sommati. <strong>Un solo numero.</strong> Ordinati dal più economico.
+        Voli low-cost + tour + biglietti musei. <strong>Tutto in un posto.</strong> Ordinati dal più economico.
       </p>
     </div>
   </section>
@@ -1247,11 +1352,62 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
       </div>
     </div>
     <div class="footer-bottom">
-      <div>© 2026 SKAP · VOLI LIVE · OSTELLO/VITA INDICATIVI · VERIFICA PRIMA DI PRENOTARE</div>
+      <div>© 2026 SKAP · VOLI LIVE · TOUR & MUSEI · VERIFICA PRIMA DI PRENOTARE</div>
       <div>MADE WITH ∅ HYPE</div>
     </div>
   </div>
 </footer>
+
+<!-- Waitlist Modal: appears when user clicks SKAP+ subscribe (lead capture for future premium launch) -->
+<div class="waitlist-overlay" id="waitlist-modal" onclick="if(event.target===this)closeWaitlist()">
+  <div class="waitlist-card">
+    <button class="waitlist-close" onclick="closeWaitlist()" aria-label="Chiudi">×</button>
+
+    <div id="waitlist-form">
+      <div class="waitlist-tag">// PREMIUM LAUNCHING SOON</div>
+      <h2 class="waitlist-title">ENTRA IN <span class="lime">WAITLIST</span></h2>
+      <p class="waitlist-sub">
+        <span id="waitlist-plan-name">SKAP+</span> sarà disponibile presto.
+        Iscriviti adesso e ricevi <strong>50% di sconto</strong> al lancio.
+      </p>
+
+      <ul class="waitlist-perks">
+        <li><span class="lime">→</span> Sei il primo a sapere quando attiviamo</li>
+        <li><span class="lime">→</span> Sconto 50% sul primo mese (o anno)</li>
+        <li><span class="lime">→</span> Niente spam, niente follia. Solo 1-2 email totali.</li>
+      </ul>
+
+      <form onsubmit="return submitWaitlist(event)">
+        <input type="hidden" id="waitlist-plan-id" value="">
+        <input
+          type="email"
+          id="waitlist-email"
+          class="waitlist-input"
+          placeholder="la-tua-email@esempio.it"
+          required
+          autocomplete="email"
+        />
+        <button type="submit" class="waitlist-submit">ISCRIVIMI ALLA WAITLIST →</button>
+      </form>
+      <p class="waitlist-fineprint">
+        Non spammiamo. Puoi cancellarti quando vuoi. SKAP rispetta il GDPR.
+      </p>
+    </div>
+
+    <div id="waitlist-success" style="display:none;">
+      <div class="waitlist-tag" style="color:var(--lime);">// SUCCESS</div>
+      <h2 class="waitlist-title">SEI <span class="lime">DENTRO!</span> 🎉</h2>
+      <p class="waitlist-sub">
+        Ti abbiamo aggiunto alla waitlist di SKAP+.
+        Quando lanceremo, riceverai una email con il <strong>codice sconto 50%</strong>.
+      </p>
+      <p class="waitlist-fineprint">
+        Nel frattempo, continua a usare SKAP free e fammi sapere cosa ne pensi.
+      </p>
+      <button class="waitlist-submit" onclick="closeWaitlist()">CHIUDI →</button>
+    </div>
+  </div>
+</div>
 
 <script>
 /* ================================= LIVE API ================================= */
@@ -1504,7 +1660,7 @@ const DESTINATIONS = [
     moods:['party','culture','budget'] },
   { id:'kra', name:'CRACOVIA', country:'POLONIA', flag:'🇵🇱', originAirport:'BGY', destAirport:'KRK', airlines:['Ryanair'],
     lat:50.0647, lng:19.9450,
-    image:'https://images.unsplash.com/photo-1606988531180-7f2dba34ec64?w=800&q=80',
+    image:'https://images.unsplash.com/photo-1565606902729-a7df27cb31c8?w=800&q=80',
     flight:{main:48, min:38, max:95, label:'medio'}, hostel:{perNight:12, type:'dorm 6p'}, life:{perDay:24},
     totalLabel:'scenario ottimale', hours:2.0, weather:12, currency:'PLN',
     why:'Piazza medievale più grande d\'Europa. Auschwitz a 1h. Vodka a fiumi.',
@@ -1528,7 +1684,7 @@ const DESTINATIONS = [
     moods:['sea','culture'] },
   { id:'mar', name:'MARRAKECH', country:'MAROCCO', flag:'🇲🇦', originAirport:'BGY', destAirport:'RAK', airlines:['Ryanair'],
     lat:31.6295, lng:-7.9811,
-    image:'https://images.unsplash.com/photo-1597212720291-936a7efd2139?w=800&q=80',
+    image:'https://images.unsplash.com/photo-1539020140153-e479b8c22e70?w=800&q=80',
     flight:{main:89, min:75, max:180, label:'medio'}, hostel:{perNight:14, type:'riad dorm'}, life:{perDay:22},
     totalLabel:'scenario realistico', hours:3.4, weather:26, currency:'MAD',
     why:'Souk impazziti, tè alla menta, Sahara a portata di mano. Altro pianeta.',
@@ -1569,10 +1725,40 @@ const DESTINATIONS = [
 ];
 
 const PLANS = [
-  { id:'free', name:'FREE', price:0, period:'', subtitle:'Prova il sistema', features:['3 ricerche al giorno','Risultati standard','No alert, no calendario'], cta:'INIZIA GRATIS', highlight:false },
-  { id:'summer', name:'ESTATE', price:9.90, period:'/mese', subtitle:'GIU · LUG · AGO', features:['Ricerche illimitate','Price alert via email','Calendario prezzi 12 mesi','Export PDF itinerari','Dati storici prezzi'], cta:'ATTIVA ESTATE', highlight:false },
-  { id:'winter', name:'INVERNO', price:7.90, period:'/mese', subtitle:'DIC · GEN · FEB', features:['Tutto di Estate','Ski destinations incluse','Skipass + trasporti','Capodanno dinamico'], cta:'ATTIVA INVERNO', highlight:false },
-  { id:'annual', name:'ANNUAL', price:59, period:'/anno', subtitle:'12 MESI · RISPARMI 40€', features:['Tutte le feature','365 giorni attivo','Early access novità','Priority support','2 price alert VIP'], cta:'ANNUAL PASS', highlight:true },
+  { id:'free', name:'FREE', price:0, period:'', subtitle:'Tutto quello che serve, gratis',
+    features:[
+      'Tutte le destinazioni',
+      'Prezzi voli LIVE in tempo reale',
+      'Date personalizzabili (weekend o vacanze)',
+      'Mappe & meteo real-time',
+      'Bottoni "Prenota volo" su Aviasales',
+      'Tour & attività su Klook',
+      'Biglietti musei su Tiqets',
+    ],
+    cta:'STAI GIÀ USANDO IL FREE', highlight:false, current:true },
+
+  { id:'plus_monthly', name:'SKAP+', price:4.90, period:'/mese', subtitle:'IN ARRIVO · ISCRIVITI ALLA WAITLIST',
+    features:[
+      'Tutto del piano FREE',
+      'Alert prezzo automatici (email)',
+      'Calendario prezzi 12 mesi',
+      'Storico prezzi 6 mesi',
+      'Error fares VIP (offerte sbagliate)',
+      'Export PDF itinerari',
+      'Niente pubblicità',
+    ],
+    cta:'ENTRA IN WAITLIST', highlight:false, comingSoon:true },
+
+  { id:'plus_annual', name:'SKAP+ ANNUALE', price:39, period:'/anno', subtitle:'IN ARRIVO · RISPARMI 35%',
+    features:[
+      'Tutto di SKAP+ Mensile',
+      '12 mesi attivi',
+      'Bonus: 2 alert VIP esclusivi',
+      'Early access nuove destinazioni',
+      'Priority email support',
+      '🎁 Sconto 50% al lancio per chi è in waitlist',
+    ],
+    cta:'ENTRA IN WAITLIST', highlight:true, comingSoon:true },
 ];
 
 const MOODS = [
@@ -1929,9 +2115,13 @@ function factRow(emoji, label, value) {
 }
 
 function renderPricing() {
-  document.getElementById('pricing-grid').innerHTML = PLANS.map(p => `
-    <div class="plan-card ${p.highlight ? 'highlight' : ''}">
-      ${p.highlight ? '<div class="plan-badge">CONSIGLIATO</div>' : ''}
+  document.getElementById('pricing-grid').innerHTML = PLANS.map(p => {
+    const action = p.comingSoon ? `onclick="openWaitlist('${p.id}')"` : (p.current ? 'disabled' : '');
+    const badgeText = p.highlight ? 'BEST DEAL' : (p.current ? 'PIANO ATTIVO' : '');
+    const cardClass = `plan-card ${p.highlight ? 'highlight' : ''} ${p.current ? 'current-plan' : ''}`;
+    return `
+    <div class="${cardClass}">
+      ${badgeText ? `<div class="plan-badge ${p.current ? 'current-badge' : ''}">${badgeText}</div>` : ''}
       <div class="plan-season">${p.subtitle}</div>
       <div class="plan-name">${p.name}</div>
       <div class="plan-price-wrap">
@@ -1947,9 +2137,51 @@ function renderPricing() {
           </li>
         `).join('')}
       </ul>
-      <button class="plan-cta">${p.cta} →</button>
+      <button class="plan-cta ${p.current ? 'cta-current' : ''}" ${action}>${p.cta} ${p.current ? '✓' : '→'}</button>
     </div>
-  `).join('');
+  `;}).join('');
+}
+
+/* Waitlist: form email per quando lanceremo il premium.
+   Per ora salva solo in localStorage (validazione locale). In produzione collegare a Resend/Mailchimp. */
+function openWaitlist(planId) {
+  const modal = document.getElementById('waitlist-modal');
+  if (modal) {
+    document.getElementById('waitlist-plan-id').value = planId;
+    document.getElementById('waitlist-plan-name').textContent = planId === 'plus_annual' ? 'SKAP+ ANNUALE' : 'SKAP+ MENSILE';
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeWaitlist() {
+  const modal = document.getElementById('waitlist-modal');
+  if (modal) {
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+    document.getElementById('waitlist-form').style.display = '';
+    document.getElementById('waitlist-success').style.display = 'none';
+  }
+}
+
+function submitWaitlist(event) {
+  event.preventDefault();
+  const email = document.getElementById('waitlist-email').value.trim();
+  const planId = document.getElementById('waitlist-plan-id').value;
+  if (!email || !email.includes('@')) {
+    alert('Inserisci una email valida');
+    return false;
+  }
+  // Salva in localStorage (in produzione: invio a Resend/Mailchimp via API)
+  try {
+    const list = JSON.parse(localStorage.getItem('skap_waitlist') || '[]');
+    list.push({ email, plan: planId, ts: new Date().toISOString() });
+    localStorage.setItem('skap_waitlist', JSON.stringify(list));
+  } catch (e) { /* localStorage non disponibile, ok */ }
+  // Mostra messaggio di successo
+  document.getElementById('waitlist-form').style.display = 'none';
+  document.getElementById('waitlist-success').style.display = 'block';
+  return false;
 }
 
 /* ================================= EVENTS ================================= */
