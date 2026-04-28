@@ -1660,7 +1660,7 @@ const DESTINATIONS = [
     moods:['party','culture','budget'] },
   { id:'kra', name:'CRACOVIA', country:'POLONIA', flag:'🇵🇱', originAirport:'BGY', destAirport:'KRK', airlines:['Ryanair'],
     lat:50.0647, lng:19.9450,
-    image:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Rynek_G%C5%82%C3%B3wny_w_Krakowie_2018.jpg/1280px-Rynek_G%C5%82%C3%B3wny_w_Krakowie_2018.jpg',
+    image:'https://images.unsplash.com/photo-1606992894456-799462f6e5ce?w=800&q=80&auto=format&fit=crop',
     flight:{main:48, min:38, max:95, label:'medio'}, hostel:{perNight:12, type:'dorm 6p'}, life:{perDay:24},
     totalLabel:'scenario ottimale', hours:2.0, weather:12, currency:'PLN',
     why:'Piazza medievale più grande d\'Europa. Auschwitz a 1h. Vodka a fiumi.',
@@ -1692,7 +1692,7 @@ const DESTINATIONS = [
     moods:['culture'] },
   { id:'val', name:'VALENCIA', country:'SPAGNA', flag:'🇪🇸', originAirport:'BGY', destAirport:'VLC', airlines:['Ryanair','Vueling'],
     lat:39.4699, lng:-0.3763,
-    image:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Ciudad_de_las_Artes_y_las_Ciencias_-_panoramio_%2810%29.jpg/1280px-Ciudad_de_las_Artes_y_las_Ciencias_-_panoramio_%2810%29.jpg',
+    image:'https://images.unsplash.com/photo-1599941321542-71eaa72f1ae5?w=800&q=80&auto=format&fit=crop',
     flight:{main:62, min:50, max:130, label:'medio'}, hostel:{perNight:21, type:'dorm 6p'}, life:{perDay:28},
     totalLabel:'scenario realistico', hours:2.1, weather:21, currency:'EUR',
     why:'Paella dove è nata. Spiaggia urbana. Città delle Arti. Barcellona senza la folla.',
@@ -1708,7 +1708,7 @@ const DESTINATIONS = [
     moods:['culture','sea'] },
   { id:'ber', name:'BERLINO', country:'GERMANIA', flag:'🇩🇪', originAirport:'BGY', destAirport:'BER', airlines:['Ryanair','easyJet'],
     lat:52.5200, lng:13.4050,
-    image:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Brandenburger_Tor_abends.jpg/1280px-Brandenburger_Tor_abends.jpg',
+    image:'https://images.unsplash.com/photo-1560969184-10fe8719e047?w=800&q=80&auto=format&fit=crop',
     flight:{main:45, min:35, max:120, label:'early book.'}, hostel:{perNight:29, type:'dorm 6p'}, life:{perDay:31},
     totalLabel:'scenario realistico', hours:1.7, weather:13, currency:'EUR',
     why:'Berghain, street art, Muro, techno, kebab a 4€. Niente è proibito.',
@@ -1912,7 +1912,7 @@ function cardHTML(d, rank) {
   return `
     <button class="dest-card" onclick="openDetail('${d.id}')">
       <div class="dest-image">
-        <img src="${d.image}" alt="${d.name}" loading="lazy" onerror="this.style.display='none'" />
+        <img src="${d.image}" alt="${d.name}" loading="lazy" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 800 600&quot;><defs><linearGradient id=&quot;g&quot; x1=&quot;0%&quot; y1=&quot;0%&quot; x2=&quot;100%&quot; y2=&quot;100%&quot;><stop offset=&quot;0%&quot; stop-color=&quot;%23222&quot;/><stop offset=&quot;100%&quot; stop-color=&quot;%23000&quot;/></linearGradient></defs><rect width=&quot;800&quot; height=&quot;600&quot; fill=&quot;url(%23g)&quot;/><text x=&quot;50%&quot; y=&quot;50%&quot; text-anchor=&quot;middle&quot; dy=&quot;.3em&quot; fill=&quot;%23c8f03c&quot; font-family=&quot;sans-serif&quot; font-weight=&quot;bold&quot; font-size=&quot;72&quot;>${d.name}</text></svg>')" />
         <div class="dest-image-overlay"></div>
         <div class="dest-image-rank">#${rank}</div>
         <div class="dest-image-price">DA ${d.flight.main}€</div>
@@ -1994,7 +1994,7 @@ function renderDetail() {
   document.getElementById('detail-content').innerHTML = `
     <div class="detail-hero">
       <div class="detail-hero-image">
-        <img src="${d.image}" alt="${d.name}" onerror="this.style.display='none'" />
+        <img src="${d.image}" alt="${d.name}" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 800 600&quot;><defs><linearGradient id=&quot;g&quot; x1=&quot;0%&quot; y1=&quot;0%&quot; x2=&quot;100%&quot; y2=&quot;100%&quot;><stop offset=&quot;0%&quot; stop-color=&quot;%23222&quot;/><stop offset=&quot;100%&quot; stop-color=&quot;%23000&quot;/></linearGradient></defs><rect width=&quot;800&quot; height=&quot;600&quot; fill=&quot;url(%23g)&quot;/><text x=&quot;50%&quot; y=&quot;50%&quot; text-anchor=&quot;middle&quot; dy=&quot;.3em&quot; fill=&quot;%23c8f03c&quot; font-family=&quot;sans-serif&quot; font-weight=&quot;bold&quot; font-size=&quot;72&quot;>${d.name}</text></svg>')" />
         <div class="detail-hero-image-overlay"></div>
         <div class="detail-hero-image-title">
           <div class="detail-hero-image-route">
