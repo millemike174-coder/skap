@@ -1252,11 +1252,11 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
           <span>BUDGET MAX <span id="results-budget">180</span>€</span>
         </div>
       </div>
-      <div class="chips-row">
-        <button class="chip active">PREZZO ↑</button>
-        <button class="chip">DURATA VOLO</button>
-        <button class="chip">VALUTAZIONE</button>
-        <button class="chip">METEO ☀</button>
+      <div class="chips-row" id="sort-chips">
+        <button class="chip active" data-sort="price" onclick="setSort('price')">PREZZO ↑</button>
+        <button class="chip" data-sort="duration" onclick="setSort('duration')">DURATA VOLO ↑</button>
+        <button class="chip" data-sort="rating" onclick="setSort('rating')">VALUTAZIONE ↓</button>
+        <button class="chip" data-sort="weather" onclick="setSort('weather')">METEO ☀ ↓</button>
       </div>
     </div>
 
@@ -1660,7 +1660,7 @@ const DESTINATIONS = [
     moods:['party','culture','budget'] },
   { id:'kra', name:'CRACOVIA', country:'POLONIA', flag:'🇵🇱', originAirport:'BGY', destAirport:'KRK', airlines:['Ryanair'],
     lat:50.0647, lng:19.9450,
-    image:'https://images.unsplash.com/photo-1565606902729-a7df27cb31c8?w=800&q=80',
+    image:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Rynek_G%C5%82%C3%B3wny_w_Krakowie_2018.jpg/1280px-Rynek_G%C5%82%C3%B3wny_w_Krakowie_2018.jpg',
     flight:{main:48, min:38, max:95, label:'medio'}, hostel:{perNight:12, type:'dorm 6p'}, life:{perDay:24},
     totalLabel:'scenario ottimale', hours:2.0, weather:12, currency:'PLN',
     why:'Piazza medievale più grande d\'Europa. Auschwitz a 1h. Vodka a fiumi.',
@@ -1692,7 +1692,7 @@ const DESTINATIONS = [
     moods:['culture'] },
   { id:'val', name:'VALENCIA', country:'SPAGNA', flag:'🇪🇸', originAirport:'BGY', destAirport:'VLC', airlines:['Ryanair','Vueling'],
     lat:39.4699, lng:-0.3763,
-    image:'https://images.unsplash.com/photo-1599082304032-31f18039e80a?w=800&q=80',
+    image:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Ciudad_de_las_Artes_y_las_Ciencias_-_panoramio_%2810%29.jpg/1280px-Ciudad_de_las_Artes_y_las_Ciencias_-_panoramio_%2810%29.jpg',
     flight:{main:62, min:50, max:130, label:'medio'}, hostel:{perNight:21, type:'dorm 6p'}, life:{perDay:28},
     totalLabel:'scenario realistico', hours:2.1, weather:21, currency:'EUR',
     why:'Paella dove è nata. Spiaggia urbana. Città delle Arti. Barcellona senza la folla.',
@@ -1708,7 +1708,7 @@ const DESTINATIONS = [
     moods:['culture','sea'] },
   { id:'ber', name:'BERLINO', country:'GERMANIA', flag:'🇩🇪', originAirport:'BGY', destAirport:'BER', airlines:['Ryanair','easyJet'],
     lat:52.5200, lng:13.4050,
-    image:'https://images.unsplash.com/photo-1587330979470-3016b6702d89?w=800&q=80',
+    image:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Brandenburger_Tor_abends.jpg/1280px-Brandenburger_Tor_abends.jpg',
     flight:{main:45, min:35, max:120, label:'early book.'}, hostel:{perNight:29, type:'dorm 6p'}, life:{perDay:31},
     totalLabel:'scenario realistico', hours:1.7, weather:13, currency:'EUR',
     why:'Berghain, street art, Muro, techno, kebab a 4€. Niente è proibito.',
@@ -1790,16 +1790,92 @@ const state = {
   mood: 'all',
   selectedId: null,
   weekendOffset: 0,
+  sort: 'price',
 };
 
 /* ================================= HELPERS ================================= */
 function computeTotals(nights) {
-  return DESTINATIONS.map(d => {
+  const arr = DESTINATIONS.map(d => {
     const flight = d.flight.main;
     const hostel = d.hostel.perNight * nights;
     const life = d.life.perDay * nights;
     return { ...d, computed: { flight, hostel, life, total: flight + hostel + life } };
-  }).sort((a,b) => a.computed.total - b.computed.total);
+  });
+  return applySorting(arr);
+}
+
+/* Applica il sort attualmente selezionato (price/duration/rating/weather) */
+function applySorting(arr) {
+  const sort = state.sort || 'price';
+  if (sort === 'price') {
+    return arr.sort((a, b) => a.flight.main - b.flight.main);
+  }
+  if (sort === 'duration') {
+    return arr.sort((a, b) => a.hours - b.hours);
+  }
+  if (sort === 'rating') {
+    // Valutazione basata sui tag iconic (più tag iconic = città più "valutata")
+    const ratingOf = (d) => {
+      let score = 0;
+      d.tags.forEach(t => {
+        if (t.type === 'iconic') score += 3;
+        else if (t.type === 'positive') score += 1;
+        else if (t.type === 'warning') score -= 0.5;
+        else if (t.type === 'danger') score -= 1;
+      });
+      return score;
+    };
+    return arr.sort((a, b) => ratingOf(b) - ratingOf(a));
+  }
+  if (sort === 'weather') {
+    // Ordina per meteo LIVE se disponibile, altrimenti weather mock
+    return arr.sort((a, b) => {
+      const tempA = (liveWeatherMap.get(a.id) ?? a.weather) ?? 0;
+      const tempB = (liveWeatherMap.get(b.id) ?? b.weather) ?? 0;
+      return tempB - tempA; // più caldo prima
+    });
+  }
+  return arr;
+}
+
+/* Cambia il sort attivo e re-renderizza */
+function setSort(sortType) {
+  state.sort = sortType;
+  // Aggiorna visivamente i bottoni (active = quello selezionato)
+  document.querySelectorAll('#sort-chips .chip').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.sort === sortType);
+  });
+  // Re-render della pagina corrente
+  const currentPage = state.page;
+  if (currentPage === 'home') renderTrending();
+  else if (currentPage === 'results') renderResults();
+  // Se è la prima volta che si clicca METEO, carica meteo per tutte le destinazioni
+  if (sortType === 'weather' && liveWeatherMap.size === 0) {
+    fetchAllWeatherInBackground();
+  }
+}
+
+/* Mappa con meteo LIVE per tutte le destinazioni (popolata in background) */
+const liveWeatherMap = new Map();
+
+/* Carica meteo per tutte le destinazioni in background, una alla volta */
+async function fetchAllWeatherInBackground() {
+  for (const dest of DESTINATIONS) {
+    if (!dest.lat || !dest.lng) continue;
+    if (liveWeatherMap.has(dest.id)) continue;
+    const data = await fetchWeather(dest.id, dest.lat, dest.lng);
+    if (data && typeof data.temp === 'number') {
+      liveWeatherMap.set(dest.id, data.temp);
+      // Se l'utente ha già cliccato METEO, riapplica il sort man mano che arrivano dati
+      if (state.sort === 'weather') {
+        const currentPage = state.page;
+        if (currentPage === 'home') renderTrending();
+        else if (currentPage === 'results') renderResults();
+      }
+    }
+    // piccola pausa per non saturare l'API
+    await new Promise(r => setTimeout(r, 200));
+  }
 }
 function filterByBudgetAndMood(arr) {
   return arr.filter(d => {
