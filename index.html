@@ -1412,7 +1412,7 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
 <script>
 /* ================================= LIVE API ================================= */
 /* SKAP marker affiliate Travelpayouts */
-const SKAP_MARKER = '522272';
+const SKAP_MARKER = '722174';
 
 /* Lista aeroporti italiani principali per ricerca multi-origine */
 const ITALIAN_AIRPORTS = ['BGY','MXP','LIN','FCO','CIA','BLQ','VCE','TRN','NAP','PSA'];
@@ -2044,7 +2044,7 @@ function renderDetail() {
         </div>
 
         <div class="cta-grid">
-          <a href="${buildAviasalesURL(state.origin || d.originAirport, d.destAirport)}" target="_blank" rel="noopener sponsored" class="cta-card primary" style="text-decoration:none;">
+          <a href="${buildAviasalesURL(state.origin || d.originAirport, d.destAirport)}" target="_blank" rel="noopener sponsored" class="cta-card primary tp-disable-emerald" data-noemerald="1" style="text-decoration:none;">
             <div class="cta-top">
               <div class="cta-label">PRENOTA VOLO</div>
               <svg class="cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
