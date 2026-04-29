@@ -2044,7 +2044,7 @@ function renderDetail() {
         </div>
 
         <div class="cta-grid">
-          <a href="${buildAviasalesURL(d.originAirport, d.destAirport)}" target="_blank" rel="noopener sponsored" class="cta-card primary" style="text-decoration:none;">
+          <a href="${buildAviasalesURL(state.origin || d.originAirport, d.destAirport)}" target="_blank" rel="noopener sponsored" class="cta-card primary" style="text-decoration:none;">
             <div class="cta-top">
               <div class="cta-label">PRENOTA VOLO</div>
               <svg class="cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
