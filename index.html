@@ -32,8 +32,9 @@
   --border-soft: #18181b;
   --text: #fafafa;
   --text-muted: #a1a1aa;
-  --text-dim: #52525b;
+  --text-dim: #a1a1aa;
   --text-dimmer: #3f3f46;
+  --text-label: #a1a1aa;
   --lime: #c8f03c;
   --sky: #38bdf8;
   --amber: #fbbf24;
@@ -164,11 +165,11 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
 }
 .field-label {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px; color: var(--text-dim); letter-spacing: 0.2em;
+  font-size: 10px; color: var(--text-label); letter-spacing: 0.2em;
   margin-bottom: 8px;
   display: flex; align-items: center; gap: 6px;
 }
-.field-label svg { width: 14px; height: 14px; color: var(--text-dimmer); }
+.field-label svg { width: 14px; height: 14px; color: var(--text-label); }
 .field-value-select {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 30px; color: var(--lime);
@@ -182,7 +183,7 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
 .date-input-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .date-label {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9px; color: var(--text-dimmer); letter-spacing: 0.15em;
+  font-size: 9px; color: var(--text-label); letter-spacing: 0.15em;
   flex-shrink: 0;
 }
 .date-input {
