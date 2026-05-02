@@ -1154,12 +1154,20 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
             PARTI DA
           </div>
           <select class="field-value-select" id="origin-select">
-            <option value="BERGAMO">BERGAMO</option>
-            <option value="MILANO">MILANO</option>
-            <option value="VENEZIA">VENEZIA</option>
-            <option value="BOLOGNA">BOLOGNA</option>
-            <option value="ROMA">ROMA</option>
-            <option value="NAPOLI">NAPOLI</option>
+            <option value="BGY">BERGAMO</option>
+            <option value="MXP">MILANO MXP</option>
+            <option value="LIN">MILANO LIN</option>
+            <option value="VCE">VENEZIA</option>
+            <option value="BLQ">BOLOGNA</option>
+            <option value="FCO">ROMA FCO</option>
+            <option value="CIA">ROMA CIA</option>
+            <option value="NAP">NAPOLI</option>
+            <option value="TRN">TORINO</option>
+            <option value="PSA">PISA</option>
+            <option value="BRI">BARI</option>
+            <option value="CTA">CATANIA</option>
+            <option value="PMO">PALERMO</option>
+            <option value="VRN">VERONA</option>
           </select>
         </div>
         <div class="search-field">
@@ -1413,6 +1421,14 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
 /* ================================= LIVE API ================================= */
 /* SKAP marker affiliate Travelpayouts */
 const SKAP_MARKER = '522272';
+
+/* Mappa codici IATA → nomi città mostrati all'utente */
+const IATA_NAMES = {
+  BGY:'BERGAMO', MXP:'MILANO MXP', LIN:'MILANO LIN', VCE:'VENEZIA', BLQ:'BOLOGNA',
+  FCO:'ROMA FCO', CIA:'ROMA CIA', NAP:'NAPOLI', TRN:'TORINO', PSA:'PISA',
+  BRI:'BARI', CTA:'CATANIA', PMO:'PALERMO', VRN:'VERONA',
+};
+function originName(iata) { return IATA_NAMES[iata] || iata; }
 
 /* Lista aeroporti italiani principali per ricerca multi-origine */
 const ITALIAN_AIRPORTS = ['BGY','MXP','LIN','FCO','CIA','BLQ','VCE','TRN','NAP','PSA'];
@@ -1975,7 +1991,7 @@ function renderResults() {
     empty.classList.add('hidden');
   }
   document.getElementById('results-num').textContent = filtered.length;
-  document.getElementById('results-origin').textContent = state.origin;
+  document.getElementById('results-origin').textContent = originName(state.origin);
   document.getElementById('results-nights').textContent = state.nights;
   document.getElementById('results-budget').textContent = state.budget;
 }
@@ -1998,7 +2014,7 @@ function renderDetail() {
         <div class="detail-hero-image-overlay"></div>
         <div class="detail-hero-image-title">
           <div class="detail-hero-image-route">
-            <span>${state.origin}</span>
+            <span>${originName(state.origin)}</span>
             <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
             <span>${d.destAirport}</span>
             <span style="color:var(--text-dimmer)">·</span>
