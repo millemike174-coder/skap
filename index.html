@@ -319,9 +319,140 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
   overflow: hidden;
   width: 100%; text-align: left;
   display: block;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, transform 0.3s ease, box-shadow 0.3s ease;
+  transform-style: preserve-3d;
+  perspective: 1000px;
 }
-.dest-card:hover { border-color: #3f3f46; }
+.dest-card:hover { 
+  border-color: #3f3f46; 
+}
+@media (hover: hover) and (pointer: fine) {
+  .dest-card:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 30px rgba(132, 204, 22, 0.08);
+  }
+}
+
+/* === OFFERTE BOMBA (sotto 60€) === */
+.dest-card.offer-bomb {
+  border-color: rgba(132, 204, 22, 0.5);
+  box-shadow: 0 0 0 1px rgba(132, 204, 22, 0.2), 0 4px 20px rgba(132, 204, 22, 0.1);
+  animation: bombGlow 3s ease-in-out infinite;
+}
+@keyframes bombGlow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(132, 204, 22, 0.2), 0 4px 20px rgba(132, 204, 22, 0.1); }
+  50% { box-shadow: 0 0 0 1px rgba(132, 204, 22, 0.5), 0 4px 30px rgba(132, 204, 22, 0.25); }
+}
+.bomb-badge {
+  position: absolute;
+  top: 12px; right: 12px;
+  background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
+  color: #0a0a0a;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 12px;
+  letter-spacing: 1px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+  z-index: 5;
+  animation: bombPulse 1.5s ease-in-out infinite;
+  box-shadow: 0 4px 12px rgba(132, 204, 22, 0.4);
+}
+@keyframes bombPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+.found-time {
+  position: absolute;
+  top: 12px; left: 12px;
+  background: rgba(10,10,10,0.85);
+  color: #a1a1aa;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  z-index: 5;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.found-time .dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  background: #84cc16;
+  border-radius: 50%;
+  margin-right: 5px;
+  animation: dotBlink 1.5s ease-in-out infinite;
+  vertical-align: middle;
+}
+@keyframes dotBlink {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px #84cc16; }
+  50% { opacity: 0.4; box-shadow: 0 0 2px #84cc16; }
+}
+
+/* === ROLLING NUMBER PRICE === */
+.price-rolling {
+  font-family: 'Bebas Neue', sans-serif;
+  display: inline-block;
+  position: relative;
+}
+.price-rolling.is-bomb {
+  color: #84cc16;
+  text-shadow: 0 0 20px rgba(132, 204, 22, 0.4);
+  animation: pricePulse 2s ease-in-out infinite;
+}
+@keyframes pricePulse {
+  0%, 100% { text-shadow: 0 0 20px rgba(132, 204, 22, 0.4); }
+  50% { text-shadow: 0 0 30px rgba(132, 204, 22, 0.7), 0 0 40px rgba(132, 204, 22, 0.3); }
+}
+
+/* === CONFETTI === */
+.confetti-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+.confetti-piece {
+  position: absolute;
+  width: 10px; height: 14px;
+  top: -20px;
+  animation: confettiFall linear forwards;
+}
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotateZ(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotateZ(720deg); opacity: 0; }
+}
+
+/* === BOMBA SECTION HEADER === */
+.bomb-section {
+  margin: 32px 0 16px;
+  padding: 0 4px;
+}
+.bomb-section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  letter-spacing: 1px;
+  color: #84cc16;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.bomb-section-title .fire {
+  display: inline-block;
+  animation: fireWiggle 0.8s ease-in-out infinite;
+}
+@keyframes fireWiggle {
+  0%, 100% { transform: rotate(-8deg) scale(1); }
+  50% { transform: rotate(8deg) scale(1.1); }
+}
+.bomb-section-sub {
+  font-size: 12px;
+  color: #71717a;
+  letter-spacing: 0.5px;
+}
 
 .dest-image {
   position: relative;
@@ -1458,6 +1589,60 @@ function buildAviasalesURL(originCode, destCode, departDate, returnDate) {
   return `https://www.aviasales.com/search/${route}?marker=${SKAP_MARKER}`;
 }
 
+/* === PRENOTA VOLO click handler con confetti per offerte bomba === */
+function onPrenotaClick(event, el) {
+  event.preventDefault();
+  const url = el.dataset.aviasalesUrl;
+  const isBomb = el.dataset.isBomb === '1';
+  if (isBomb) triggerConfetti();
+  // Apre Aviasales (se confetti, dopo 350ms per far vedere effect)
+  setTimeout(() => {
+    window.open(url, '_blank', 'noopener,sponsored');
+  }, isBomb ? 350 : 0);
+  return false;
+}
+
+/* === CONFETTI animation === */
+function triggerConfetti() {
+  const colors = ['#84cc16', '#a3e635', '#bef264', '#ecfccb', '#65a30d', '#ffffff'];
+  const container = document.createElement('div');
+  container.className = 'confetti-container';
+  document.body.appendChild(container);
+  for (let i = 0; i < 60; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDuration = (Math.random() * 1.5 + 1.5) + 's';
+    piece.style.animationDelay = (Math.random() * 0.3) + 's';
+    piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+    if (Math.random() > 0.5) piece.style.borderRadius = '50%';
+    container.appendChild(piece);
+  }
+  setTimeout(() => container.remove(), 3500);
+}
+
+/* === ROLLING PRICE animation (slot machine effect) === */
+function animateRollingPrices() {
+  const elements = document.querySelectorAll('.price-rolling[data-target]');
+  elements.forEach(el => {
+    if (el.dataset.animated === '1') return;
+    const target = parseInt(el.dataset.target, 10);
+    if (isNaN(target)) return;
+    el.dataset.animated = '1';
+    let current = Math.max(99, target * 2);
+    const step = Math.max(1, Math.floor((current - target) / 18));
+    const interval = setInterval(() => {
+      current = Math.max(target, current - step);
+      el.textContent = `DA ${current}€`;
+      if (current <= target) {
+        el.textContent = `DA ${target}€`;
+        clearInterval(interval);
+      }
+    }, 35);
+  });
+}
+
 /* Legge le date attualmente selezionate dagli input data */
 function getCurrentDates() {
   const departInput = document.getElementById('depart-date');
@@ -1739,6 +1924,158 @@ const DESTINATIONS = [
     why:'Sagrada, spiaggia, tapas, Gaudí ovunque. Il classico che ormai costa.',
     tags:[{label:'ICONICO',type:'iconic'},{label:'BARCA+SAGRADA',type:'iconic'},{label:'CARA DI NOTTE',type:'warning'},{label:'BORSEGGI FREQUENTI',type:'danger'}],
     moods:['sea','party','culture'] },
+  { id:'ist', name:'ISTANBUL', country:'TURCHIA', flag:'🇹🇷', originAirport:'BGY', destAirport:'SAW', airlines:['Pegasus','AJet'],
+    lat:41.0082, lng:28.9784,
+    image:'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=800&q=80',
+    flight:{main:48, min:35, max:140, label:'medio'}, hostel:{perNight:13, type:'dorm 8p'}, life:{perDay:22},
+    totalLabel:'scenario ottimale', hours:3.0, weather:18, currency:'TRY',
+    why:'Tra Europa e Asia. Bazar, hammam, kebab a 3€. Esperienza che non scordi.',
+    tags:[{label:'BOSFORO',type:'iconic'},{label:'GRAND BAZAAR',type:'iconic'},{label:'KEBAB 3€',type:'positive'},{label:'TAXI FREGATURE',type:'danger'}],
+    moods:['culture','budget'] },
+  { id:'tia', name:'TIRANA', country:'ALBANIA', flag:'🇦🇱', originAirport:'BGY', destAirport:'TIA', airlines:['Wizz Air','Albawings'],
+    lat:41.3275, lng:19.8187,
+    image:'https://images.unsplash.com/photo-1592486058517-37e8c4f87a35?w=800&q=80',
+    flight:{main:55, min:38, max:120, label:'medio'}, hostel:{perNight:10, type:'dorm 6p'}, life:{perDay:18},
+    totalLabel:'scenario ottimale', hours:1.5, weather:20, currency:'ALL',
+    why:'Capitale colorata che sta esplodendo. Bunker comunisti diventati musei. Tutto costa nulla.',
+    tags:[{label:'PALAZZI COLORATI',type:'iconic'},{label:'BUNKART MUSEO',type:'iconic'},{label:'CAFFÈ 1€',type:'positive'},{label:'SPIAGGIA 1H',type:'positive'}],
+    moods:['budget','culture'] },
+  { id:'sof', name:'SOFIA', country:'BULGARIA', flag:'🇧🇬', originAirport:'BGY', destAirport:'SOF', airlines:['Ryanair','Wizz Air'],
+    lat:42.6977, lng:23.3219,
+    image:'https://images.unsplash.com/photo-1601273439402-acc1cda7b1da?w=800&q=80',
+    flight:{main:50, min:38, max:110, label:'medio'}, hostel:{perNight:11, type:'dorm 8p'}, life:{perDay:18},
+    totalLabel:'scenario ottimale', hours:2.2, weather:14, currency:'BGN',
+    why:'Capitale bulgara economica, monasteri ortodossi e Vitosha mountain a 30min.',
+    tags:[{label:'CATTEDRALE',type:'iconic'},{label:'MONTAGNA 30MIN',type:'positive'},{label:'BIRRA 1.50€',type:'positive'},{label:'POCO INGLESE',type:'warning'}],
+    moods:['budget','culture'] },
+  { id:'bel', name:'BELGRADO', country:'SERBIA', flag:'🇷🇸', originAirport:'BGY', destAirport:'BEG', airlines:['Wizz Air','Air Serbia'],
+    lat:44.7866, lng:20.4489,
+    image:'https://images.unsplash.com/photo-1592486058517-37e8c4f87a35?w=800&q=80',
+    flight:{main:62, min:48, max:130, label:'medio'}, hostel:{perNight:13, type:'dorm 6p'}, life:{perDay:22},
+    totalLabel:'scenario ottimale', hours:1.7, weather:16, currency:'RSD',
+    why:'Nightlife pazzesca. Splavovi (locali galleggianti) sul Danubio. Energia est-europea pura.',
+    tags:[{label:'SPLAVOVI',type:'iconic'},{label:'NIGHTLIFE FOLLE',type:'positive'},{label:'CIBO ENORME',type:'positive'},{label:'POCO TURISTICA',type:'warning'}],
+    moods:['party','budget'] },
+  { id:'lis', name:'LISBONA', country:'PORTOGALLO', flag:'🇵🇹', originAirport:'BGY', destAirport:'LIS', airlines:['Ryanair','TAP'],
+    lat:38.7223, lng:-9.1393,
+    image:'https://images.unsplash.com/photo-1588535593305-79e88747c7df?w=800&q=80',
+    flight:{main:75, min:55, max:160, label:'medio'}, hostel:{perNight:20, type:'dorm 6p'}, life:{perDay:30},
+    totalLabel:'scenario realistico', hours:2.8, weather:19, currency:'EUR',
+    why:'Tram giallo, pastéis de nata, surf a 30min. Capitale UE che ancora costa il giusto.',
+    tags:[{label:'TRAM 28',type:'iconic'},{label:'SURF VICINO',type:'positive'},{label:'CIBO TOP',type:'positive'},{label:'COLLINE INFINITE',type:'warning'}],
+    moods:['sea','culture','party'] },
+  { id:'opo', name:'PORTO', country:'PORTOGALLO', flag:'🇵🇹', originAirport:'BGY', destAirport:'OPO', airlines:['Ryanair','TAP'],
+    lat:41.1579, lng:-8.6291,
+    image:'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=800&q=80',
+    flight:{main:70, min:50, max:150, label:'medio'}, hostel:{perNight:17, type:'dorm 6p'}, life:{perDay:25},
+    totalLabel:'scenario realistico', hours:2.7, weather:17, currency:'EUR',
+    why:'Vino, azulejos blu, Ribeira sul fiume. Più piccola di Lisbona ma più autentica.',
+    tags:[{label:'VINO PORTO',type:'iconic'},{label:'AZULEJOS',type:'iconic'},{label:'CIBO ECONOMICO',type:'positive'},{label:'PIOVE TANTO',type:'warning'}],
+    moods:['culture','sea'] },
+  { id:'mad', name:'MADRID', country:'SPAGNA', flag:'🇪🇸', originAirport:'BGY', destAirport:'MAD', airlines:['Ryanair','Iberia'],
+    lat:40.4168, lng:-3.7038,
+    image:'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=800&q=80',
+    flight:{main:88, min:65, max:170, label:'medio'}, hostel:{perNight:22, type:'dorm 6p'}, life:{perDay:32},
+    totalLabel:'scenario realistico', hours:2.5, weather:20, currency:'EUR',
+    why:'Tapas crawl, Prado, vita notturna fino alle 6. Più autentica di Barcellona.',
+    tags:[{label:'PRADO MUSEO',type:'iconic'},{label:'TAPAS GRATIS',type:'positive'},{label:'NOTTI INFINITE',type:'positive'},{label:'PIÙ CARA OGGI',type:'warning'}],
+    moods:['party','culture'] },
+  { id:'sev', name:'SIVIGLIA', country:'SPAGNA', flag:'🇪🇸', originAirport:'BGY', destAirport:'SVQ', airlines:['Ryanair','Vueling'],
+    lat:37.3891, lng:-5.9845,
+    image:'https://images.unsplash.com/photo-1559682468-a6a29e7d9517?w=800&q=80',
+    flight:{main:92, min:68, max:180, label:'medio'}, hostel:{perNight:19, type:'dorm 6p'}, life:{perDay:28},
+    totalLabel:'scenario realistico', hours:2.5, weather:24, currency:'EUR',
+    why:'Andalusia pura. Flamenco vero, Alcázar moresco, tapas a 2€.',
+    tags:[{label:'ALCÁZAR',type:'iconic'},{label:'FLAMENCO VERO',type:'iconic'},{label:'CALDO ESTREMO',type:'warning'},{label:'TAPAS 2€',type:'positive'}],
+    moods:['culture','party'] },
+  { id:'mar', name:'MARRAKECH', country:'MAROCCO', flag:'🇲🇦', originAirport:'BGY', destAirport:'RAK', airlines:['Ryanair'],
+    lat:31.6295, lng:-7.9811,
+    image:'https://images.unsplash.com/photo-1597212720128-faae39df3eb1?w=800&q=80',
+    flight:{main:85, min:60, max:200, label:'medio'}, hostel:{perNight:14, type:'riad dorm'}, life:{perDay:20},
+    totalLabel:'scenario ottimale', hours:3.5, weather:22, currency:'MAD',
+    why:'Souk caotici, riad nascosti, tè alla menta. Africa a 3 ore da casa.',
+    tags:[{label:'JEMAA EL-FNA',type:'iconic'},{label:'RIAD MAGICI',type:'iconic'},{label:'TÈ MENTA OVUNQUE',type:'positive'},{label:'CONTRATTAZIONE OBBLIGATORIA',type:'warning'}],
+    moods:['culture','budget'] },
+  { id:'ber', name:'BERLINO', country:'GERMANIA', flag:'🇩🇪', originAirport:'BGY', destAirport:'BER', airlines:['Ryanair','easyJet'],
+    lat:52.5200, lng:13.4050,
+    image:'https://images.unsplash.com/photo-1587330979470-3016b6702d89?w=800&q=80',
+    flight:{main:72, min:55, max:160, label:'medio'}, hostel:{perNight:23, type:'dorm 8p'}, life:{perDay:32},
+    totalLabel:'scenario realistico', hours:1.5, weather:13, currency:'EUR',
+    why:'Berghain, kebab, muro storico, club fino al lunedì. Mecca techno mondiale.',
+    tags:[{label:'BERGHAIN',type:'iconic'},{label:'EAST SIDE GALLERY',type:'iconic'},{label:'KEBAB INVENTATO QUI',type:'positive'},{label:'METEO BRUTTO',type:'warning'}],
+    moods:['party','culture'] },
+  { id:'val', name:'VALENCIA', country:'SPAGNA', flag:'🇪🇸', originAirport:'BGY', destAirport:'VLC', airlines:['Ryanair','Vueling'],
+    lat:39.4699, lng:-0.3763,
+    image:'https://images.unsplash.com/photo-1569949381669-ecf31ae8e613?w=800&q=80',
+    flight:{main:78, min:58, max:160, label:'medio'}, hostel:{perNight:18, type:'dorm 6p'}, life:{perDay:26},
+    totalLabel:'scenario realistico', hours:2.0, weather:21, currency:'EUR',
+    why:'Paella vera, Città delle Arti futurista, spiaggia urbana. Più rilassata di Barcellona.',
+    tags:[{label:'CITTÀ DELLE ARTI',type:'iconic'},{label:'PAELLA AUTENTICA',type:'positive'},{label:'SPIAGGIA URBANA',type:'positive'},{label:'METEO TOP',type:'positive'}],
+    moods:['sea','culture'] },
+  { id:'mlh', name:'MALAGA', country:'SPAGNA', flag:'🇪🇸', originAirport:'BGY', destAirport:'AGP', airlines:['Ryanair','Vueling'],
+    lat:36.7213, lng:-4.4214,
+    image:'https://images.unsplash.com/photo-1623244302860-c34c2076edc6?w=800&q=80',
+    flight:{main:82, min:60, max:170, label:'medio'}, hostel:{perNight:18, type:'dorm 6p'}, life:{perDay:26},
+    totalLabel:'scenario realistico', hours:2.7, weather:23, currency:'EUR',
+    why:'Costa del Sol. 320 giorni di sole all\'anno, spiagge enormi, tapas economici.',
+    tags:[{label:'320 GIORNI SOLE',type:'iconic'},{label:'COSTA DEL SOL',type:'positive'},{label:'CASA PICASSO',type:'iconic'},{label:'AFFOLLATA ESTATE',type:'warning'}],
+    moods:['sea','party'] },
+  { id:'wro', name:'BRESLAVIA', country:'POLONIA', flag:'🇵🇱', originAirport:'BGY', destAirport:'WRO', airlines:['Ryanair'],
+    lat:51.1079, lng:17.0385,
+    image:'https://images.unsplash.com/photo-1561625116-da14f1f95019?w=800&q=80',
+    flight:{main:48, min:35, max:110, label:'medio'}, hostel:{perNight:13, type:'dorm 8p'}, life:{perDay:18},
+    totalLabel:'scenario ottimale', hours:1.6, weather:11, currency:'PLN',
+    why:'Città dei nani (300 statuette nascoste), piazza colorata, vodka economica.',
+    tags:[{label:'NANI NASCOSTI',type:'iconic'},{label:'RYNEK COLORATO',type:'iconic'},{label:'VODKA ECONOMICA',type:'positive'},{label:'INVERNO RIGIDO',type:'warning'}],
+    moods:['culture','budget'] },
+  { id:'kau', name:'KAUNAS', country:'LITUANIA', flag:'🇱🇹', originAirport:'BGY', destAirport:'KUN', airlines:['Ryanair'],
+    lat:54.8985, lng:23.9036,
+    image:'https://images.unsplash.com/photo-1601546309200-9bd8b9ee0ace?w=800&q=80',
+    flight:{main:55, min:38, max:130, label:'early book.'}, hostel:{perNight:11, type:'dorm 6p'}, life:{perDay:18},
+    totalLabel:'scenario ottimale', hours:2.5, weather:8, currency:'EUR',
+    why:'Capitale Cultura UE 2022, street art ovunque. Genuina, niente turisti italiani.',
+    tags:[{label:'STREET ART',type:'iconic'},{label:'NO ITALIANI',type:'positive'},{label:'BIRRA 2€',type:'positive'},{label:'FREDDO ESTREMO INV.',type:'danger'}],
+    moods:['culture','budget'] },
+  { id:'rig', name:'RIGA', country:'LETTONIA', flag:'🇱🇻', originAirport:'BGY', destAirport:'RIX', airlines:['Ryanair','airBaltic'],
+    lat:56.9496, lng:24.1052,
+    image:'https://images.unsplash.com/photo-1567008045013-9bb0d96eaf07?w=800&q=80',
+    flight:{main:68, min:48, max:140, label:'medio'}, hostel:{perNight:14, type:'dorm 6p'}, life:{perDay:20},
+    totalLabel:'scenario ottimale', hours:2.7, weather:7, currency:'EUR',
+    why:'Centro storico UNESCO Art Nouveau. Mercato centrale enorme. Baltic vibes.',
+    tags:[{label:'CENTRO UNESCO',type:'iconic'},{label:'ART NOUVEAU',type:'iconic'},{label:'MERCATO ENORME',type:'positive'},{label:'INVERNO BUIO',type:'warning'}],
+    moods:['culture','budget'] },
+  { id:'tll', name:'TALLINN', country:'ESTONIA', flag:'🇪🇪', originAirport:'BGY', destAirport:'TLL', airlines:['Ryanair'],
+    lat:59.4370, lng:24.7536,
+    image:'https://images.unsplash.com/photo-1601745813999-7e6b51e4cf65?w=800&q=80',
+    flight:{main:75, min:55, max:160, label:'medio'}, hostel:{perNight:17, type:'dorm 6p'}, life:{perDay:24},
+    totalLabel:'scenario realistico', hours:2.8, weather:6, currency:'EUR',
+    why:'Centro medievale UNESCO, capitale digitale UE, sauna estone. Fiaba reale.',
+    tags:[{label:'MEDIEVALE UNESCO',type:'iconic'},{label:'WIFI OVUNQUE',type:'positive'},{label:'SAUNA TIPICA',type:'positive'},{label:'GELO INVERNALE',type:'danger'}],
+    moods:['culture'] },
+  { id:'cph', name:'COPENAGHEN', country:'DANIMARCA', flag:'🇩🇰', originAirport:'BGY', destAirport:'CPH', airlines:['Ryanair','SAS'],
+    lat:55.6761, lng:12.5683,
+    image:'https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?w=800&q=80',
+    flight:{main:95, min:65, max:180, label:'medio'}, hostel:{perNight:32, type:'dorm 8p'}, life:{perDay:48},
+    totalLabel:'scenario realistico', hours:1.8, weather:9, currency:'DKK',
+    why:'Bici, design, Tivoli, hygge. Capitale felicità mondiale ma cara.',
+    tags:[{label:'NYHAVN',type:'iconic'},{label:'BICI OVUNQUE',type:'iconic'},{label:'CARA ANZICHENO',type:'danger'},{label:'TIVOLI MAGICO',type:'positive'}],
+    moods:['culture'] },
+  { id:'edi', name:'EDIMBURGO', country:'SCOZIA', flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', originAirport:'BGY', destAirport:'EDI', airlines:['Ryanair'],
+    lat:55.9533, lng:-3.1883,
+    image:'https://images.unsplash.com/photo-1568797629192-908f81e9f7e3?w=800&q=80',
+    flight:{main:88, min:60, max:180, label:'medio'}, hostel:{perNight:25, type:'dorm 8p'}, life:{perDay:35},
+    totalLabel:'scenario realistico', hours:2.5, weather:8, currency:'GBP',
+    why:'Castello su roccia vulcanica, vicoli Harry Potter, whisky. Atmosfera unica.',
+    tags:[{label:'CASTELLO',type:'iconic'},{label:'HARRY POTTER VIBES',type:'iconic'},{label:'WHISKY VERO',type:'positive'},{label:'PIOGGIA SEMPRE',type:'warning'}],
+    moods:['culture'] },
+  { id:'dub', name:'DUBLINO', country:'IRLANDA', flag:'🇮🇪', originAirport:'BGY', destAirport:'DUB', airlines:['Ryanair','Aer Lingus'],
+    lat:53.3498, lng:-6.2603,
+    image:'https://images.unsplash.com/photo-1549918864-48ac978761a4?w=800&q=80',
+    flight:{main:78, min:55, max:170, label:'medio'}, hostel:{perNight:28, type:'dorm 8p'}, life:{perDay:38},
+    totalLabel:'scenario realistico', hours:2.7, weather:11, currency:'EUR',
+    why:'Pub vivi, Guinness alla fonte, gente più simpatica del mondo.',
+    tags:[{label:'TEMPLE BAR',type:'iconic'},{label:'GUINNESS DOC',type:'iconic'},{label:'GENTE TOP',type:'positive'},{label:'PINTA 8€',type:'warning'}],
+    moods:['party','culture'] },
 ];
 
 const PLANS = [
@@ -1926,13 +2263,17 @@ function renderMoodFilters(containerId) {
 function cardHTML(d, rank) {
   const c = d.computed;
   const liveBadge = d.flight.live ? '<span class="live-badge">● LIVE</span>' : '';
+  const isBomb = d.flight.main < 60;
+  const foundMin = (parseInt(d.id, 36) % 50) + 3; // 3-52 min, deterministic per dest
   return `
-    <button class="dest-card" onclick="openDetail('${d.id}')">
+    <button class="dest-card ${isBomb ? 'offer-bomb' : ''}" onclick="openDetail('${d.id}')">
       <div class="dest-image">
         <img src="${d.image}" alt="${d.name}" loading="lazy" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 800 600&quot;><defs><linearGradient id=&quot;g&quot; x1=&quot;0%&quot; y1=&quot;0%&quot; x2=&quot;100%&quot; y2=&quot;100%&quot;><stop offset=&quot;0%&quot; stop-color=&quot;%23222&quot;/><stop offset=&quot;100%&quot; stop-color=&quot;%23000&quot;/></linearGradient></defs><rect width=&quot;800&quot; height=&quot;600&quot; fill=&quot;url(%23g)&quot;/><text x=&quot;50%&quot; y=&quot;50%&quot; text-anchor=&quot;middle&quot; dy=&quot;.3em&quot; fill=&quot;%23c8f03c&quot; font-family=&quot;sans-serif&quot; font-weight=&quot;bold&quot; font-size=&quot;72&quot;>${d.name}</text></svg>')" />
         <div class="dest-image-overlay"></div>
+        ${isBomb ? '<div class="bomb-badge">🔥 OFFERTA BOMBA</div>' : ''}
+        <div class="found-time"><span class="dot"></span>${foundMin} min fa</div>
         <div class="dest-image-rank">#${rank}</div>
-        <div class="dest-image-price">DA ${d.flight.main}€</div>
+        <div class="dest-image-price"><span class="price-rolling ${isBomb ? 'is-bomb' : ''}" data-target="${d.flight.main}">DA ${d.flight.main}€</span></div>
         <div class="dest-image-badges">
           <div class="dest-image-title">${d.name}</div>
           <div class="dest-image-flag">${d.flag}</div>
@@ -1976,6 +2317,7 @@ function renderTrending() {
   document.getElementById('trending-cards').innerHTML = top3.map((d,i) => cardHTML(d, i+1)).join('') || '<div class="empty-state"><div class="empty-face">:/</div><div class="empty-text">Nessuna destinazione trovata con questi filtri.</div></div>';
   document.getElementById('trending-count').textContent = filtered.length;
   document.getElementById('hero-routes-count').textContent = (DESTINATIONS.length * 412).toLocaleString('it-IT') + ' rotte';
+  setTimeout(animateRollingPrices, 100);
 }
 
 function renderResults() {
@@ -1988,13 +2330,38 @@ function renderResults() {
     empty.classList.remove('hidden');
     document.getElementById('empty-budget').textContent = state.budget;
   } else {
-    container.innerHTML = filtered.map((d,i) => cardHTML(d, i+1)).join('');
+    // Separa offerte bomba (sotto 60€) dal resto
+    const bombs = filtered.filter(d => d.flight.main < 60);
+    const regular = filtered.filter(d => d.flight.main >= 60);
+    let html = '';
+    if (bombs.length > 0) {
+      html += `
+        <div class="bomb-section">
+          <div class="bomb-section-title"><span class="fire">🔥</span>OFFERTE BOMBA</div>
+          <div class="bomb-section-sub">VOLI SOTTO I 60€ · TROVATI ORA</div>
+        </div>
+        ${bombs.map((d,i) => cardHTML(d, i+1)).join('')}
+      `;
+    }
+    if (regular.length > 0) {
+      if (bombs.length > 0) {
+        html += `
+          <div class="bomb-section">
+            <div class="bomb-section-title" style="color:#a1a1aa;">ALTRE DESTINAZIONI</div>
+            <div class="bomb-section-sub">${regular.length} OPZIONI · ENTRO IL TUO BUDGET</div>
+          </div>
+        `;
+      }
+      html += regular.map((d,i) => cardHTML(d, bombs.length+i+1)).join('');
+    }
+    container.innerHTML = html;
     empty.classList.add('hidden');
   }
   document.getElementById('results-num').textContent = filtered.length;
   document.getElementById('results-origin').textContent = originName(state.origin);
   document.getElementById('results-nights').textContent = state.nights;
   document.getElementById('results-budget').textContent = state.budget;
+  setTimeout(animateRollingPrices, 100);
 }
 
 function renderDetail() {
@@ -2061,7 +2428,7 @@ function renderDetail() {
         </div>
 
         <div class="cta-grid">
-          <a href="#" data-aviasales-url="${buildAviasalesURL(state.origin || d.originAirport, d.destAirport)}" onclick="window.open(this.dataset.aviasalesUrl, '_blank', 'noopener,sponsored');return false;" class="cta-card primary tp-no-tracking" style="text-decoration:none;">
+          <a href="#" data-aviasales-url="${buildAviasalesURL(state.origin || d.originAirport, d.destAirport)}" data-is-bomb="${d.flight.main < 60 ? '1' : '0'}" onclick="onPrenotaClick(event, this);return false;" class="cta-card primary tp-no-tracking" style="text-decoration:none;">
             <div class="cta-top">
               <div class="cta-label">PRENOTA VOLO</div>
               <svg class="cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
